@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ENS AUDIT SIMULATOR // OPERATIONAL BLACK OPS</title>
+<title>ENS AUDIT COMMAND CENTER // CCN-STIC OPERATIONAL</title>
 <style>
 :root {
     --bg-color: #020408;
-    --panel-bg: rgba(5, 12, 8, 0.88);
+    --panel-bg: rgba(5, 12, 8, 0.92);
     --matrix-green: #00ff41;
     --matrix-dark: #003b00;
     --alert-red: #ff2a2a;
@@ -27,116 +27,203 @@ body {
     font-family: 'Courier New', Courier, monospace;
     overflow: hidden;
     height: 100vh;
-    font-size: 13px;
+    font-size: 12px;
 }
 #matrix-canvas {
-    position: fixed;
-    top: 0; left: 0;
+    position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
-    z-index: 0;
-    opacity: 0.12;
+    z-index: 0; opacity: 0.08;
 }
 .scanline {
-    position: fixed;
-    top: 0; left: 0;
+    position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
-    background: linear-gradient(to bottom, transparent 50%, rgba(0, 255, 65, 0.02) 50%);
+    background: linear-gradient(to bottom, transparent 50%, rgba(0, 255, 65, 0.015) 50%);
     background-size: 100% 4px;
-    pointer-events: none;
-    z-index: 1;
+    pointer-events: none; z-index: 1;
 }
 .app {
-    position: relative;
-    z-index: 2;
+    position: relative; z-index: 2;
     display: grid;
-    grid-template-columns: 260px 1fr 340px;
-    grid-template-rows: 55px 1fr 170px;
-    gap: 8px;
-    padding: 8px;
+    grid-template-columns: 280px 1fr 360px;
+    grid-template-rows: 50px 1fr 180px;
+    gap: 6px; padding: 6px;
     height: 100vh;
 }
 .panel {
     background: var(--panel-bg);
     border: var(--border);
     border-radius: 3px;
-    padding: 10px;
+    padding: 8px;
     overflow: hidden;
     backdrop-filter: blur(3px);
-    box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.03);
+    box-shadow: inset 0 0 15px rgba(0, 255, 65, 0.03);
+    display: flex; flex-direction: column;
 }
 .header {
     grid-column: 1 / -1;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 15px;
+    padding: 0 12px;
     border-bottom: 2px solid var(--matrix-green);
+    flex-direction: row;
 }
 .header h1 {
     color: var(--matrix-green);
-    font-size: 1rem;
-    letter-spacing: 3px;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
     text-shadow: var(--glow);
 }
-.header-info {
-    display: flex;
-    gap: 20px;
-    font-size: 0.8rem;
-}
+.header-info { display: flex; gap: 14px; font-size: 0.72rem; flex-wrap: wrap; }
 .header-info span { color: var(--cyan); }
 .header-info .val { color: var(--matrix-green); font-weight: bold; }
-.actors-panel { grid-row: 2 / 4; overflow-y: auto; }
-.log-panel { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; }
-.risk-panel { grid-column: 3; grid-row: 2 / 4; overflow-y: auto; }
-.controls-panel { grid-column: 2; grid-row: 3; display: flex; flex-direction: column; gap: 8px; }
+.score-display {
+    background: rgba(0,255,65,0.1);
+    padding: 3px 10px;
+    border: 1px solid var(--matrix-green);
+    border-radius: 3px;
+    font-weight: bold;
+    color: var(--matrix-green);
+}
+.left-panel { grid-row: 2 / 4; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.center-panel { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; overflow: hidden; }
+.right-panel { grid-column: 3; grid-row: 2 / 4; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.bottom-panel { grid-column: 2; grid-row: 3; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
 .panel-title {
     color: var(--cyan);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     letter-spacing: 1.5px;
     border-bottom: 1px solid rgba(0, 243, 255, 0.3);
-    padding-bottom: 6px;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-}
-.actor {
-    padding: 8px;
+    padding-bottom: 4px;
     margin-bottom: 6px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.panel-title .badge {
+    background: var(--matrix-green);
+    color: black;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 0.65rem;
+}
+.actors-section { flex: 0 0 auto; max-height: 35%; overflow-y: auto; }
+.chat-section { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.actor {
+    padding: 6px;
+    margin-bottom: 4px;
     border-left: 3px solid var(--text-dim);
     background: rgba(0, 243, 255, 0.03);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     transition: all 0.4s;
     opacity: 0.5;
+    cursor: pointer;
 }
 .actor.present { opacity: 1; border-left-color: var(--cyan); }
 .actor.speaking { 
     border-left-color: var(--matrix-green); 
-    background: rgba(0, 255, 65, 0.1); 
+    background: rgba(0, 255, 65, 0.12); 
     box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+    opacity: 1;
 }
 .actor.hostile { 
     border-left-color: var(--alert-red); 
-    background: rgba(255, 42, 42, 0.1); 
+    background: rgba(255, 42, 42, 0.12); 
     box-shadow: 0 0 8px rgba(255, 42, 42, 0.3);
+    opacity: 1;
 }
-.actor-name { font-weight: bold; color: var(--matrix-green); }
-.actor-role { font-size: 0.7rem; color: var(--text-dim); display: block; }
+.actor-name { font-weight: bold; color: var(--matrix-green); font-size: 0.75rem; }
+.actor-role { font-size: 0.65rem; color: var(--text-dim); display: block; }
+.actor-mood { font-size: 0.6rem; color: var(--yellow); font-style: italic; }
+.chat-messages {
+    flex: 1; overflow-y: auto;
+    font-size: 0.75rem;
+    padding: 4px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(0,243,255,0.1);
+    border-radius: 2px;
+    margin-bottom: 4px;
+}
+.chat-msg { margin-bottom: 6px; padding: 4px; border-left: 2px solid var(--cyan); background: rgba(0,243,255,0.03); }
+.chat-msg.you { border-left-color: var(--matrix-green); background: rgba(0,255,65,0.05); }
+.chat-msg .who { font-weight: bold; color: var(--cyan); font-size: 0.7rem; }
+.chat-msg.you .who { color: var(--matrix-green); }
+.chat-input-row { display: flex; gap: 4px; flex-shrink: 0; }
+.chat-input-row select {
+    flex: 0 0 110px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    padding: 4px;
+    font-family: inherit;
+    font-size: 0.7rem;
+}
+.chat-input-row input {
+    flex: 1;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--matrix-green);
+    color: var(--matrix-green);
+    padding: 4px;
+    font-family: inherit;
+    font-size: 0.7rem;
+}
+.chat-input-row button {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+}
+.tabs { display: flex; gap: 2px; flex-shrink: 0; margin-bottom: 4px; flex-wrap: wrap; }
+.tab {
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(0,255,65,0.2);
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.tab.active {
+    background: var(--matrix-green);
+    color: black;
+    border-color: var(--matrix-green);
+    font-weight: bold;
+}
+.tab:hover:not(.active) { border-color: var(--matrix-green); color: var(--matrix-green); }
+.tab-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.tab-pane {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    flex-direction: column;
+}
+.tab-pane.active { display: flex; }
 .log-container {
     flex: 1;
     overflow-y: auto;
-    font-size: 0.85rem;
-    line-height: 1.5;
-    padding-right: 8px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    padding-right: 6px;
 }
 .log-entry { 
-    margin-bottom: 10px; 
-    padding: 6px 8px;
+    margin-bottom: 6px; 
+    padding: 5px 7px;
     border-left: 2px solid transparent;
     opacity: 0; 
-    animation: slideIn 0.4s forwards;
+    animation: slideIn 0.3s forwards;
     background: rgba(0,0,0,0.3);
+    font-size: 0.78rem;
 }
-@keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-.log-entry .timestamp { color: var(--cyan); font-size: 0.75rem; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+.log-entry .timestamp { color: var(--cyan); font-size: 0.7rem; }
 .log-entry .actor-name { font-weight: bold; margin-right: 5px; }
 .log-entry.auditor { border-left-color: var(--matrix-green); }
 .log-entry.auditor .actor-name { color: var(--matrix-green); }
@@ -145,28 +232,202 @@ body {
 .log-entry.dpo .actor-name { color: #ff69b4; }
 .log-entry.rrhh .actor-name { color: var(--purple); }
 .log-entry.superior .actor-name { color: var(--yellow); }
+.log-entry.provider .actor-name { color: #ff7f50; }
 .log-entry.system { border-left-color: var(--alert-red); background: rgba(255,42,42,0.08); }
 .log-entry.system .actor-name { color: var(--alert-red); }
 .log-entry.decision { border-left-color: var(--yellow); background: rgba(255,221,0,0.08); }
 .log-entry.decision .actor-name { color: var(--yellow); }
 .log-entry.finding { border-left-color: var(--alert-orange); background: rgba(255,136,0,0.08); }
 .log-entry.finding .actor-name { color: var(--alert-orange); }
+.log-entry.terminal { border-left-color: #888; background: rgba(0,0,0,0.6); font-family: 'Courier New', monospace; }
+.log-entry.terminal .actor-name { color: #888; }
+.log-entry.terminal .text { color: var(--matrix-green); }
+.terminal-container {
+    flex: 1;
+    background: #000;
+    border: 1px solid var(--matrix-green);
+    padding: 8px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    color: var(--matrix-green);
+}
+.terminal-line { margin-bottom: 2px; white-space: pre-wrap; word-break: break-all; }
+.terminal-line.cmd { color: var(--cyan); }
+.terminal-line.err { color: var(--alert-red); }
+.terminal-line.warn { color: var(--alert-orange); }
+.terminal-line.info { color: var(--yellow); }
+.terminal-input-row { display: flex; gap: 4px; flex-shrink: 0; margin-top: 4px; }
+.terminal-input-row span { color: var(--matrix-green); padding: 4px; }
+.terminal-input-row input {
+    flex: 1;
+    background: #000;
+    border: 1px solid var(--matrix-green);
+    color: var(--matrix-green);
+    padding: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+}
+.checklist-container { flex: 1; overflow-y: auto; padding: 4px; }
+.checklist-group { margin-bottom: 10px; }
+.checklist-group-title {
+    color: var(--cyan);
+    font-size: 0.75rem;
+    padding: 4px;
+    background: rgba(0,243,255,0.08);
+    border-left: 3px solid var(--cyan);
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    font-size: 0.72rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+}
+.checklist-item:hover { background: rgba(0,255,65,0.05); }
+.checklist-item input[type="checkbox"] { accent-color: var(--matrix-green); }
+.checklist-item .code { color: var(--matrix-green); font-weight: bold; width: 80px; }
+.checklist-item .name { flex: 1; color: var(--text-main); }
+.checklist-item .level { font-size: 0.65rem; padding: 1px 5px; border-radius: 2px; }
+.level-baja { background: #003b00; color: var(--matrix-green); }
+.level-media { background: #3b3b00; color: var(--yellow); }
+.level-alta { background: #3b0000; color: var(--alert-red); }
+.checklist-item.audited { background: rgba(0,255,65,0.1); }
+.checklist-item.nc-major { background: rgba(255,42,42,0.15); border-left: 3px solid var(--alert-red); }
+.checklist-item.nc-minor { background: rgba(255,136,0,0.15); border-left: 3px solid var(--alert-orange); }
+.checklist-item.obs { background: rgba(255,221,0,0.1); border-left: 3px solid var(--yellow); }
+.checklist-item.ok { background: rgba(0,255,65,0.15); border-left: 3px solid var(--matrix-green); }
+.risk-matrix {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 30px repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr) 30px;
+    gap: 2px;
+    padding: 8px;
+}
+.risk-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    min-height: 40px;
+}
+.risk-cell.low { background: rgba(0,255,65,0.2); color: var(--matrix-green); }
+.risk-cell.medium { background: rgba(255,221,0,0.25); color: var(--yellow); }
+.risk-cell.high { background: rgba(255,136,0,0.35); color: var(--alert-orange); }
+.risk-cell.critical { background: rgba(255,42,42,0.45); color: var(--alert-red); }
+.risk-cell:hover { transform: scale(1.05); box-shadow: 0 0 8px rgba(255,255,255,0.3); }
+.risk-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    color: var(--cyan);
+    font-weight: bold;
+}
+.risk-axis-y { writing-mode: vertical-rl; transform: rotate(180deg); grid-column: 1; grid-row: 1 / span 5; color: var(--cyan); font-size: 0.7rem; display: flex; align-items: center; justify-content: center; }
+.risk-axis-x { grid-column: 2 / span 5; grid-row: 6; color: var(--cyan); font-size: 0.7rem; display: flex; align-items: center; justify-content: center; }
+.risk-dot {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--matrix-green);
+    box-shadow: 0 0 6px var(--matrix-green);
+    animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.2); } }
+.timeline-container { flex: 1; overflow-y: auto; padding: 8px; position: relative; }
+.timeline-line {
+    position: absolute;
+    left: 20px; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--matrix-green), var(--cyan));
+}
+.timeline-event {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 12px;
+    font-size: 0.75rem;
+}
+.timeline-event::before {
+    content: '';
+    position: absolute;
+    left: 14px; top: 4px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--matrix-green);
+    border: 2px solid var(--bg-color);
+    box-shadow: 0 0 6px var(--matrix-green);
+}
+.timeline-event.critical::before { background: var(--alert-red); box-shadow: 0 0 6px var(--alert-red); }
+.timeline-event.warning::before { background: var(--alert-orange); box-shadow: 0 0 6px var(--alert-orange); }
+.timeline-event.info::before { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+.timeline-time { color: var(--cyan); font-size: 0.7rem; font-weight: bold; }
+.timeline-title { color: var(--text-main); margin: 2px 0; }
+.timeline-desc { color: var(--text-dim); font-size: 0.68rem; }
+.network-container {
+    flex: 1;
+    position: relative;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,255,65,0.2);
+    overflow: hidden;
+}
+.network-node {
+    position: absolute;
+    padding: 6px 10px;
+    background: rgba(0,243,255,0.15);
+    border: 1px solid var(--cyan);
+    border-radius: 3px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--cyan);
+}
+.network-node:hover { background: rgba(0,243,255,0.3); transform: scale(1.05); }
+.network-node.compromised {
+    background: rgba(255,42,42,0.25);
+    border-color: var(--alert-red);
+    color: var(--alert-red);
+    animation: blink 1s infinite;
+}
+.network-node.secure {
+    background: rgba(0,255,65,0.15);
+    border-color: var(--matrix-green);
+    color: var(--matrix-green);
+}
+.network-link {
+    position: absolute;
+    height: 1px;
+    background: var(--cyan);
+    transform-origin: 0 0;
+    opacity: 0.4;
+}
+.network-link.encrypted { background: var(--matrix-green); opacity: 0.7; }
+.network-link.insecure { background: var(--alert-red); opacity: 0.7; stroke-dasharray: 4; }
 .metric {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    font-size: 0.8rem;
+    margin-bottom: 5px;
+    font-size: 0.72rem;
 }
 .metric-label { flex: 1; color: var(--text-dim); }
-.metric-value { width: 45px; text-align: right; font-weight: bold; color: var(--matrix-green); }
+.metric-value { width: 40px; text-align: right; font-weight: bold; color: var(--matrix-green); font-size: 0.72rem; }
 .metric-bar {
-    width: 100px;
-    height: 6px;
+    width: 80px;
+    height: 5px;
     background: #1a1a1a;
     border-radius: 3px;
     overflow: hidden;
-    margin: 0 8px;
+    margin: 0 6px;
 }
 .metric-fill {
     height: 100%;
@@ -177,36 +438,38 @@ body {
 .metric-fill.warning { background: var(--alert-orange); }
 .metric-fill.critical { background: var(--alert-red); }
 .finding-item {
-    font-size: 0.75rem;
-    padding: 8px;
-    margin-bottom: 6px;
+    font-size: 0.7rem;
+    padding: 6px;
+    margin-bottom: 4px;
     border-radius: 2px;
-    display: none;
-    animation: slideIn 0.5s forwards;
+    cursor: pointer;
+    transition: all 0.2s;
 }
+.finding-item:hover { transform: translateX(3px); }
 .finding-item.major { border: 1px solid var(--alert-red); color: var(--alert-red); background: rgba(255,42,42,0.08); }
 .finding-item.minor { border: 1px solid var(--alert-orange); color: var(--alert-orange); background: rgba(255,136,0,0.08); }
 .finding-item.observation { border: 1px solid var(--yellow); color: var(--yellow); background: rgba(255,221,0,0.05); }
 .finding-item.strength { border: 1px solid var(--matrix-green); color: var(--matrix-green); background: rgba(0,255,65,0.05); }
-.finding-title { font-weight: bold; display: block; margin-bottom: 3px; }
-.finding-control { font-size: 0.7rem; opacity: 0.8; }
+.finding-title { font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.72rem; }
+.finding-control { font-size: 0.65rem; opacity: 0.8; }
 .evidence-box {
-    margin-top: 10px;
-    padding: 8px;
+    padding: 6px;
     background: rgba(0,0,0,0.6);
     border: 1px dashed var(--cyan);
-    font-size: 0.75rem;
-    display: none;
+    font-size: 0.7rem;
     border-radius: 2px;
+    flex-shrink: 0;
+    max-height: 120px;
+    overflow-y: auto;
 }
-.evidence-box .hash { color: var(--matrix-green); font-size: 0.7rem; word-break: break-all; }
+.evidence-box .hash { color: var(--matrix-green); font-size: 0.65rem; word-break: break-all; }
 button {
     background: transparent;
     border: 1px solid var(--matrix-green);
     color: var(--matrix-green);
-    padding: 8px 12px;
+    padding: 5px 10px;
     font-family: inherit;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: bold;
     cursor: pointer;
     text-transform: uppercase;
@@ -219,105 +482,126 @@ button.danger { border-color: var(--alert-red); color: var(--alert-red); }
 button.danger:hover:not(:disabled) { background: var(--alert-red); color: black; }
 button.warning { border-color: var(--alert-orange); color: var(--alert-orange); }
 button.warning:hover:not(:disabled) { background: var(--alert-orange); color: black; }
-.btn-row { display: flex; gap: 6px; }
-.btn-row button { flex: 1; }
+button.info { border-color: var(--cyan); color: var(--cyan); }
+button.info:hover:not(:disabled) { background: var(--cyan); color: black; }
+.btn-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.btn-row button { flex: 1; min-width: 80px; font-size: 0.68rem; padding: 5px 6px; }
 select, input {
     background: rgba(0,0,0,0.6);
     border: 1px solid var(--matrix-green);
     color: var(--matrix-green);
-    padding: 6px;
+    padding: 4px;
     font-family: inherit;
-    font-size: 0.75rem;
-    width: 100%;
-    margin-bottom: 6px;
+    font-size: 0.7rem;
 }
+select { width: 100%; margin-bottom: 4px; }
 select option { background: #000; }
 .decision-box {
-    margin-top: 8px;
-    padding: 10px;
+    padding: 8px;
     border: 1px solid var(--yellow);
     background: rgba(255,221,0,0.05);
     display: none;
+    flex-shrink: 0;
 }
-.decision-box h4 { color: var(--yellow); font-size: 0.85rem; margin-bottom: 8px; }
+.decision-box h4 { color: var(--yellow); font-size: 0.8rem; margin-bottom: 6px; }
 .decision-option {
-    padding: 6px;
-    margin-bottom: 4px;
+    padding: 5px;
+    margin-bottom: 3px;
     border: 1px solid rgba(255,221,0,0.3);
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     transition: all 0.2s;
 }
 .decision-option:hover { background: rgba(255,221,0,0.15); border-color: var(--yellow); }
-.phase-indicator {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 8px;
-}
+.phase-indicator { display: flex; gap: 3px; margin-bottom: 4px; flex-shrink: 0; }
 .phase {
     flex: 1;
-    height: 4px;
+    height: 3px;
     background: #222;
     border-radius: 2px;
+    position: relative;
 }
 .phase.active { background: var(--matrix-green); box-shadow: 0 0 6px var(--matrix-green); }
 .phase.done { background: var(--cyan); }
-.radar-container {
-    width: 100%;
-    height: 180px;
-    margin: 10px 0;
-    position: relative;
-}
-.heatmap {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 2px;
-    margin-top: 10px;
-}
-.heat-cell {
-    aspect-ratio: 1;
-    background: #1a1a1a;
-    border-radius: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.phase::after {
+    content: attr(data-label);
+    position: absolute;
+    top: 5px; left: 0;
     font-size: 0.55rem;
-    color: #555;
-    transition: all 0.3s;
-    cursor: help;
+    color: var(--text-dim);
+    white-space: nowrap;
 }
-.heat-cell.ok { background: rgba(0,255,65,0.4); color: var(--matrix-green); }
-.heat-cell.warn { background: rgba(255,136,0,0.4); color: var(--alert-orange); }
-.heat-cell.fail { background: rgba(255,42,42,0.5); color: var(--alert-red); }
-.heat-cell.na { background: rgba(100,100,100,0.2); color: #444; }
 .status-bar {
     display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    padding: 4px 8px;
+    justify-content: space-around;
+    font-size: 0.7rem;
+    padding: 3px 6px;
     background: rgba(0,0,0,0.5);
     border-radius: 2px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    flex-shrink: 0;
 }
 .status-bar .label { color: var(--text-dim); }
 .status-bar .value { color: var(--matrix-green); font-weight: bold; }
 .timer {
-    font-size: 1.2rem;
+    font-size: 1rem;
     color: var(--alert-red);
     text-align: center;
     font-weight: bold;
     text-shadow: 0 0 8px var(--alert-red);
     display: none;
+    padding: 3px;
+    border: 1px solid var(--alert-red);
+    background: rgba(255,42,42,0.1);
 }
 .timer.active { display: block; }
-::-webkit-scrollbar { width: 5px; }
+.radar-container { width: 100%; height: 150px; flex-shrink: 0; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: #000; }
 ::-webkit-scrollbar-thumb { background: var(--matrix-dark); }
 ::-webkit-scrollbar-thumb:hover { background: var(--matrix-green); }
 .blink { animation: blink 1s infinite; }
 @keyframes blink { 50% { opacity: 0.3; } }
-.pulse { animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: var(--panel-bg);
+    border: 2px solid var(--matrix-green);
+    border-radius: 4px;
+    padding: 20px;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 0 40px var(--matrix-green);
+}
+.modal h2 { color: var(--matrix-green); margin-bottom: 12px; font-size: 1rem; letter-spacing: 2px; }
+.modal-close {
+    float: right;
+    cursor: pointer;
+    color: var(--alert-red);
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+.modal-section { margin-bottom: 12px; }
+.modal-section h3 { color: var(--cyan); font-size: 0.85rem; margin-bottom: 6px; border-bottom: 1px solid rgba(0,243,255,0.3); padding-bottom: 3px; }
+.modal-field { display: flex; gap: 10px; font-size: 0.8rem; margin-bottom: 4px; }
+.modal-field .label { color: var(--text-dim); min-width: 140px; }
+.modal-field .value { color: var(--text-main); flex: 1; }
+.modal-field .value.critical { color: var(--alert-red); }
+.modal-field .value.warning { color: var(--alert-orange); }
+.modal-field .value.ok { color: var(--matrix-green); }
+.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.config-grid label { font-size: 0.7rem; color: var(--text-dim); }
 </style>
 </head>
 <body>
@@ -327,136 +611,184 @@ select option { background: #000; }
 
 <div class="app">
     <div class="panel header">
-        <h1 id="main-title">/// ENS AUDIT SIMULATOR</h1>
+        <h1>/// ENS COMMAND CENTER // CCN-STIC-800</h1>
         <div class="header-info">
             <span>ORG: <span class="val" id="hdr-org">---</span></span>
             <span>CAT: <span class="val" id="hdr-cat">---</span></span>
             <span>FASE: <span class="val" id="hdr-phase">PRE-AUDITORÍA</span></span>
             <span>CUMPLIMIENTO: <span class="val" id="hdr-compliance">--%</span></span>
+            <span class="score-display">PUNTOS: <span id="hdr-score">0</span></span>
         </div>
     </div>
 
-    <div class="panel actors-panel">
-        <div class="panel-title">> ACTORES_EN_ESCENA</div>
-        <div id="actors-list"></div>
-        <div class="panel-title" style="margin-top: 15px;">> CONFIG_ESCENARIO</div>
-        <label style="font-size:0.7rem;color:var(--text-dim);">ORGANIZACIÓN</label>
-        <select id="sel-org">
-            <option value="aleatoria">Aleatoria</option>
-            <option value="admin">Administración General del Estado</option>
-            <option value="sanidad">Servicio de Salud Autonómico</option>
-            <option value="uni">Universidad Pública</option>
-            <option value="ayto">Ayuntamiento</option>
-            <option value="justicia">Tribunal de Justicia</option>
-            <option value="defensa">Ministerio de Defensa</option>
-        </select>
-        <label style="font-size:0.7rem;color:var(--text-dim);">CATEGORÍA DEL SISTEMA</label>
-        <select id="sel-cat">
-            <option value="aleatoria">Aleatoria</option>
-            <option value="bajo">Categoría Baja</option>
-            <option value="medio">Categoría Media</option>
-            <option value="alto">Categoría Alta</option>
-        </select>
-        <label style="font-size:0.7rem;color:var(--text-dim);">DIFICULTAD</label>
-        <select id="sel-diff">
-            <option value="normal">Normal</option>
-            <option value="hostil">Hostil (actores resistentes)</option>
-            <option value="caos">Caos (incidente en curso)</option>
-        </select>
+    <div class="panel left-panel">
+        <div class="actors-section">
+            <div class="panel-title">> ACTORES_EN_ESCENA <span class="badge" id="actor-count">0</span></div>
+            <div id="actors-list"></div>
+        </div>
+        <div class="chat-section">
+            <div class="panel-title">> CHAT_INTERROGATORIO</div>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input-row">
+                <select id="chat-target"></select>
+                <input type="text" id="chat-input" placeholder="Pregunta al actor..." onkeypress="if(event.key==='Enter')sendChat()">
+                <button onclick="sendChat()">ENVIAR</button>
+            </div>
+        </div>
     </div>
 
-    <div class="panel log-panel">
-        <div class="panel-title">> TRANSMISIÓN_OPERATIVA_EN_VIVO</div>
+    <div class="panel center-panel">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('log')">📜 LOG</div>
+            <div class="tab" onclick="switchTab('terminal')">💻 TERMINAL</div>
+            <div class="tab" onclick="switchTab('checklist')">✅ CHECKLIST</div>
+            <div class="tab" onclick="switchTab('risk')">⚠ MATRIZ RIESGO</div>
+            <div class="tab" onclick="switchTab('timeline')">⏱ TIMELINE</div>
+            <div class="tab" onclick="switchTab('network')">🌐 RED</div>
+        </div>
         <div class="phase-indicator">
-            <div class="phase" id="ph-1" title="Planificación"></div>
-            <div class="phase" id="ph-2" title="Ejecución"></div>
-            <div class="phase" id="ph-3" title="Informe"></div>
-            <div class="phase" id="ph-4" title="Seguimiento"></div>
+            <div class="phase" id="ph-1" data-label="PLAN"></div>
+            <div class="phase" id="ph-2" data-label="EJEC"></div>
+            <div class="phase" id="ph-3" data-label="INFORME"></div>
+            <div class="phase" id="ph-4" data-label="PAC"></div>
         </div>
         <div class="status-bar">
             <span><span class="label">HALLAZGOS: </span><span class="value" id="stat-findings">0</span></span>
             <span><span class="label">EVIDENCIAS: </span><span class="value" id="stat-evidence">0</span></span>
-            <span><span class="label">INCIDENCIAS: </span><span class="value" id="stat-incidents">0</span></span>
+            <span><span class="label">INCIDENTES: </span><span class="value" id="stat-incidents">0</span></span>
+            <span><span class="label">CONTROLES: </span><span class="value" id="stat-controls">0/0</span></span>
             <span><span class="label">TIEMPO: </span><span class="value" id="stat-time">00:00</span></span>
         </div>
-        <div class="timer" id="pressure-timer">PRESIÓN: <span id="timer-value">00:00</span></div>
-        <div class="log-container" id="log-container"></div>
+        <div class="timer" id="pressure-timer">⚠ PRESIÓN: <span id="timer-value">00:00</span></div>
+        
+        <div class="tab-content">
+            <div class="tab-pane active" id="tab-log">
+                <div class="log-container" id="log-container"></div>
+            </div>
+            <div class="tab-pane" id="tab-terminal">
+                <div class="terminal-container" id="terminal-output"></div>
+                <div class="terminal-input-row">
+                    <span>auditor@ccn:~$</span>
+                    <input type="text" id="terminal-input" placeholder="Escribe un comando (help para ver comandos)" onkeypress="if(event.key==='Enter')executeCommand()">
+                </div>
+            </div>
+            <div class="tab-pane" id="tab-checklist">
+                <div class="checklist-container" id="checklist-container"></div>
+            </div>
+            <div class="tab-pane" id="tab-risk">
+                <div style="padding:8px;font-size:0.75rem;color:var(--cyan);text-align:center;">MATRIZ DE RIESGOS (PROBABILIDAD × IMPACTO)</div>
+                <div class="risk-matrix" id="risk-matrix"></div>
+            </div>
+            <div class="tab-pane" id="tab-timeline">
+                <div class="timeline-container" id="timeline-container">
+                    <div class="timeline-line"></div>
+                </div>
+            </div>
+            <div class="tab-pane" id="tab-network">
+                <div class="network-container" id="network-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel right-panel">
+        <div style="flex: 0 0 auto;">
+            <div class="panel-title">> MADUREZ_ENS</div>
+            <div class="radar-container">
+                <svg id="radar-svg" viewBox="0 0 200 150" width="100%" height="100%"></svg>
+            </div>
+            <div class="metric"><span class="metric-label">MP Protección</span><div class="metric-bar"><div class="metric-fill" id="m-MP"></div></div><span class="metric-value" id="v-MP">--%</span></div>
+            <div class="metric"><span class="metric-label">OR Organización</span><div class="metric-bar"><div class="metric-fill" id="m-OR"></div></div><span class="metric-value" id="v-OR">--%</span></div>
+            <div class="metric"><span class="metric-label">OP Operacional</span><div class="metric-bar"><div class="metric-fill" id="m-OP"></div></div><span class="metric-value" id="v-OP">--%</span></div>
+            <div class="metric"><span class="metric-label">CP Continuidad</span><div class="metric-bar"><div class="metric-fill" id="m-CP"></div></div><span class="metric-value" id="v-CP">--%</span></div>
+            <div class="metric"><span class="metric-label">PT Protección</span><div class="metric-bar"><div class="metric-fill" id="m-PT"></div></div><span class="metric-value" id="v-PT">--%</span></div>
+            <div class="metric"><span class="metric-label">RC Reacciones</span><div class="metric-bar"><div class="metric-fill" id="m-RC"></div></div><span class="metric-value" id="v-RC">--%</span></div>
+        </div>
+        <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; min-height: 0;">
+            <div>
+                <div class="panel-title">> HALLAZGOS <span class="badge" id="finding-count">0</span></div>
+                <div id="findings-list"></div>
+            </div>
+            <div>
+                <div class="panel-title">> EVIDENCIA_ACTIVA</div>
+                <div class="evidence-box" id="evidence-box" style="display:none;">
+                    <strong style="color: var(--cyan);">ARCHIVO:</strong> <span id="ev-file"></span><br>
+                    <strong style="color: var(--cyan);">CONTENIDO:</strong> <span id="ev-content"></span><br>
+                    <div class="hash" id="ev-hash"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel bottom-panel">
         <div class="decision-box" id="decision-box">
             <h4>⚠ DECISIÓN OPERATIVA REQUERIDA</h4>
-            <div id="decision-question"></div>
+            <div id="decision-question" style="font-size:0.78rem;margin-bottom:6px;"></div>
             <div id="decision-options"></div>
         </div>
+        <div style="flex-shrink:0;">
+            <div class="panel-title">> CONFIG_ESCENARIO</div>
+            <div class="config-grid">
+                <div>
+                    <label>ORGANIZACIÓN</label>
+                    <select id="sel-org">
+                        <option value="aleatoria">🎲 Aleatoria</option>
+                        <option value="admin">Ministerio Hacienda (AGE)</option>
+                        <option value="sanidad">SERMAS (Sanidad)</option>
+                        <option value="uni">Universidad Complutense</option>
+                        <option value="ayto">Ayuntamiento Barcelona</option>
+                        <option value="justicia">TSJ Andalucía</option>
+                        <option value="defensa">Mando Sistemas (Defensa)</option>
+                        <option value="ssocial">Seguridad Social (INSS)</option>
+                        <option value="policia">CNP - Policía Nacional</option>
+                    </select>
+                </div>
+                <div>
+                    <label>CATEGORÍA</label>
+                    <select id="sel-cat">
+                        <option value="aleatoria">🎲 Aleatoria</option>
+                        <option value="bajo">BAJA - 29 controles básicos</option>
+                        <option value="medio">MEDIA - 43 controles + medios</option>
+                        <option value="alto">ALTA - 50+ controles todos</option>
+                    </select>
+                </div>
+                <div>
+                    <label>DIFICULTAD</label>
+                    <select id="sel-diff">
+                        <option value="normal">Normal (cooperativo)</option>
+                        <option value="hostil">Hostil (resistencia)</option>
+                        <option value="caos">Caos (incidente activo)</option>
+                        <option value="forensic">Forense (post-breach)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>TIPO AUDITORÍA</label>
+                    <select id="sel-type">
+                        <option value="inicial">Inicial (certificación)</option>
+                        <option value="seguimiento">Seguimiento anual</option>
+                        <option value="renovacion">Renovación (triennial)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div style="flex-shrink:0;">
+            <div class="btn-row">
+                <button id="btn-start" onclick="startAudit()">▶ INICIAR</button>
+                <button id="btn-restart" onclick="restartAudit()" disabled>↻ REINICIAR</button>
+                <button id="btn-pressure" onclick="applyPressure()" disabled class="danger">⚡ PRESIÓN</button>
+                <button id="btn-evidence" onclick="requestEvidence()" disabled class="info">🔍 EVIDENCIA</button>
+                <button id="btn-escalate" onclick="escalateFinding()" disabled class="warning">⬆ ESCALAR</button>
+                <button id="btn-report" onclick="generateReport()" disabled>📋 PRELIMINAR</button>
+                <button id="btn-final" onclick="finalReport()" disabled>📜 FINAL</button>
+                <button id="btn-export" onclick="exportReport()" disabled>💾 EXPORT</button>
+            </div>
+        </div>
     </div>
+</div>
 
-    <div class="panel risk-panel">
-        <div class="panel-title">> ANÁLISIS_DE_MADUREZ</div>
-        <div class="radar-container">
-            <svg id="radar-svg" viewBox="0 0 200 180" width="100%" height="100%"></svg>
-        </div>
-        
-        <div class="panel-title">> MAPA_DE_CALOR_CONTROLES</div>
-        <div class="heatmap" id="heatmap"></div>
-
-        <div class="panel-title" style="margin-top:10px;">> MÉTRICAS_ENS</div>
-        <div class="metric">
-            <span class="metric-label">MP (Protección)</span>
-            <div class="metric-bar"><div class="metric-fill" id="m-MP"></div></div>
-            <span class="metric-value" id="v-MP">--%</span>
-        </div>
-        <div class="metric">
-            <span class="metric-label">OR (Organización)</span>
-            <div class="metric-bar"><div class="metric-fill" id="m-OR"></div></div>
-            <span class="metric-value" id="v-OR">--%</span>
-        </div>
-        <div class="metric">
-            <span class="metric-label">OP (Operacional)</span>
-            <div class="metric-bar"><div class="metric-fill" id="m-OP"></div></div>
-            <span class="metric-value" id="v-OP">--%</span>
-        </div>
-        <div class="metric">
-            <span class="metric-label">CP (Continuidad)</span>
-            <div class="metric-bar"><div class="metric-fill" id="m-CP"></div></div>
-            <span class="metric-value" id="v-CP">--%</span>
-        </div>
-        <div class="metric">
-            <span class="metric-label">AT (Accesos)</span>
-            <div class="metric-bar"><div class="metric-fill" id="m-AT"></div></div>
-            <span class="metric-value" id="v-AT">--%</span>
-        </div>
-        <div class="metric">
-            <span class="metric-label">RC (Reacciones)</span>
-            <div class="metric-bar"><div class="metric-fill" id="m-RC"></div></div>
-            <span class="metric-value" id="v-RC">--%</span>
-        </div>
-
-        <div class="panel-title" style="margin-top:10px;">> HALLAZGOS_DETECTADOS</div>
-        <div id="findings-list"></div>
-
-        <div class="evidence-box" id="evidence-box">
-            <strong style="color: var(--cyan);">EVIDENCIA_ADJUNTA:</strong><br>
-            <span id="evidence-text"></span>
-            <div class="hash" id="evidence-hash"></div>
-        </div>
-    </div>
-
-    <div class="panel controls-panel">
-        <div class="btn-row">
-            <button id="btn-start" onclick="startAudit()">INICIAR AUDITORÍA</button>
-            <button id="btn-restart" onclick="restartAudit()" disabled>REINICIAR</button>
-        </div>
-        <div class="btn-row">
-            <button id="btn-pressure" onclick="applyPressure()" disabled class="danger">PRESIÓN OPERATIVA</button>
-            <button id="btn-evidence" onclick="requestEvidence()" disabled>SOLICITAR EVIDENCIA</button>
-            <button id="btn-escalate" onclick="escalateFinding()" disabled>ESCALAR HALLAZGO</button>
-        </div>
-        <div class="btn-row">
-            <button id="btn-report" onclick="generateReport()" disabled class="warning">INFORME PRELIMINAR</button>
-            <button id="btn-final" onclick="finalReport()" disabled>INFORME FINAL</button>
-            <button id="btn-export" onclick="exportReport()" disabled>EXPORTAR JSON</button>
-        </div>
-        <div style="font-size:0.7rem;color:var(--text-dim);text-align:center;margin-top:4px;">
-            PROTOCOLO CCN-STIC-800 // ENS RD 311/2022 // SIMULACIÓN FORMATIVA
-        </div>
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <span class="modal-close" onclick="closeModal()">×</span>
+        <div id="modal-content"></div>
     </div>
 </div>
 
@@ -485,211 +817,501 @@ function drawMatrix() {
         drops[i]++;
     }
 }
-setInterval(drawMatrix, 40);
+setInterval(drawMatrix, 50);
 
 // ============================================================
-// BASE DE DATOS DE ESCENARIOS
+// BASE DE DATOS COMPLETA
 // ============================================================
 const ORGS = {
-    admin: { name: 'Ministerio de Hacienda y Función Pública', cat: 'alto', sector: 'AGE' },
-    sanidad: { name: 'Servicio Madrileño de Salud (SERMAS)', cat: 'alto', sector: 'Sanidad' },
-    uni: { name: 'Universidad Complutense de Madrid', cat: 'medio', sector: 'Educación' },
-    ayto: { name: 'Ayuntamiento de Barcelona', cat: 'medio', sector: 'Administración Local' },
-    justicia: { name: 'Tribunal Superior de Justicia de Andalucía', cat: 'alto', sector: 'Justicia' },
-    defensa: { name: 'Ministerio de Defensa - Mando de Sistemas', cat: 'alto', sector: 'Defensa' }
+    admin: { name: 'Ministerio de Hacienda y Función Pública', cat: 'alto', sector: 'AGE', sede: 'Madrid', systems: ['Sede Electrónica', 'Sistema de Nóminas AGE', 'Portal de Transparencia', 'Registro General'] },
+    sanidad: { name: 'Servicio Madrileño de Salud (SERMAS)', cat: 'alto', sector: 'Sanidad', sede: 'Madrid', systems: ['Historia Clínica SACYL', 'Sistema de Citas', 'Receta Electrónica', 'URGencias'] },
+    uni: { name: 'Universidad Complutense de Madrid', cat: 'medio', sector: 'Educación', sede: 'Madrid', systems: ['Secretaría Virtual', 'Campus Virtual', 'Gestión Académica', 'Biblioteca Digital'] },
+    ayto: { name: 'Ayuntamiento de Barcelona', cat: 'medio', sector: 'Admin. Local', sede: 'Barcelona', systems: ['Sede Electrónica', 'Padrón Municipal', 'Tributos', 'Urbanismo'] },
+    justicia: { name: 'TSJ de Andalucía, Ceuta y Melilla', cat: 'alto', sector: 'Justicia', sede: 'Sevilla', systems: ['Minerva (expediente judicial)', 'LexNET', 'Registro Civil', 'Gestión Procesal'] },
+    defensa: { name: 'Mando de Sistemas de Información (DEFENSA)', cat: 'alto', sector: 'Defensa', sede: 'Madrid', sedeClas: 'RESTRINGIDO', systems: ['Mando y Control', 'Comunicaciones Cifradas', 'Inteligencia SIGINT', 'Logística Militar'] },
+    ssocial: { name: 'Instituto Nacional de la Seguridad Social', cat: 'alto', sector: 'SSocial', sede: 'Madrid', systems: ['Sistema SILTRA', 'Gestión de Pensiones', 'Portal Import@ss', 'Ventanilla Única'] },
+    policia: { name: 'Policía Nacional - DGPN', cat: 'alto', sector: 'FSE', sede: 'Madrid', sedeClas: 'RESERVADO', systems: ['Sistema de Atestados', 'AFIS/Dactiloscopia', 'Cédulas de Ciudadano', 'Comunicaciones Operativas'] }
 };
 
 const ACTORS_POOL = {
-    auditor_lider: { id: 'auditor_lider', name: 'Dra. Elena Voss', role: 'Auditor Líder CCN', class: 'auditor', personality: 'rigorous' },
-    auditor_tec: { id: 'auditor_tec', name: 'Ing. Yael Ben-Rubí', role: 'Auditor Técnico CCN', class: 'auditor', personality: 'technical' },
-    ciso: { id: 'ciso', name: 'Carlos Mendoza', role: 'CISO / Resp. Seguridad', class: 'ciso', personality: 'defensive' },
-    ciso_tech: { id: 'ciso_tech', name: 'Ing. Sara Levi', role: 'CISO Técnica', class: 'ciso', personality: 'cooperative' },
-    sysadmin: { id: 'sysadmin', name: 'Javier Ruiz', role: 'Admin. Sistemas Senior', class: 'sysadmin', personality: 'overworked' },
-    sysadmin_jr: { id: 'sysadmin_jr', name: 'Laura Chen', role: 'Admin. Sistemas Junior', class: 'sysadmin', personality: 'nervous' },
-    dpo: { id: 'dpo', name: 'Abg. Marta Soler', role: 'DPO / Legal', class: 'dpo', personality: 'legalistic' },
-    rrhh: { id: 'rrhh', name: 'D. Ana Belén Torres', role: 'Directora RRHH', class: 'rrhh', personality: 'unaware' },
-    superior: { id: 'superior', name: 'D. Ricardo Núñez', role: 'Órgano Superior', class: 'superior', personality: 'political' },
-    csirt: { id: 'csirt', name: 'Eq. INCIBE-CSIRT', role: 'CSIRT de referencia', class: 'system', personality: 'neutral' }
+    auditor_lider: { id: 'auditor_lider', name: 'Dra. Elena Voss', role: 'Auditor Líder CCN (ENAC)', class: 'auditor', personality: 'rigorous', mood: 'profesional', expertise: ['CCN-STIC-800', 'ISO 27001', 'Gestión de riesgos'] },
+    auditor_tec: { id: 'auditor_tec', name: 'Ing. Yael Ben-Rubí', role: 'Auditor Técnico CCN', class: 'auditor', personality: 'technical', mood: 'analítico', expertise: ['Pentesting', 'Forense', 'SIEM', 'Redes'] },
+    auditor_legal: { id: 'auditor_legal', name: 'Abg. Noa Shapira', role: 'Auditor Legal ENS/RGPD', class: 'auditor', personality: 'precise', mood: 'meticuloso', expertise: ['RGPD', 'LOPDGDD', 'ENS', 'Contratación pública'] },
+    ciso: { id: 'ciso', name: 'Carlos Mendoza', role: 'Responsable de Seguridad', class: 'ciso', personality: 'defensive', mood: 'tenso', expertise: ['Gestión de seguridad', 'Análisis de riesgos'] },
+    ciso_tech: { id: 'ciso_tech', name: 'Ing. Sara Levi', role: 'Responsable de Seguridad (téc.)', class: 'ciso', personality: 'cooperative', mood: 'colaborador', expertise: ['Arquitectura segura', 'Criptografía'] },
+    resp_sistema: { id: 'resp_sistema', name: 'D. Fernando Castillo', role: 'Responsable del Sistema', class: 'superior', personality: 'political', mood: 'preocupado', expertise: ['Gestión de sistemas', 'Presupuestos'] },
+    sysadmin: { id: 'sysadmin', name: 'Javier Ruiz', role: 'Admin. Sistemas Senior', class: 'sysadmin', personality: 'overworked', mood: 'estresado', expertise: ['Windows Server', 'Linux', 'AD', 'VMware'] },
+    sysadmin_jr: { id: 'sysadmin_jr', name: 'Laura Chen', role: 'Admin. Sistemas Junior', class: 'sysadmin', personality: 'nervous', mood: 'ansioso', expertise: ['Redes', 'Monitoring'] },
+    dpo: { id: 'dpo', name: 'Abg. Marta Soler', role: 'DPO / Delegado Protección Datos', class: 'dpo', personality: 'legalistic', mood: 'cauto', expertise: ['RGPD', 'Evaluaciones impacto', 'Brechas'] },
+    rrhh: { id: 'rrhh', name: 'Dña. Ana Belén Torres', role: 'Directora RRHH', class: 'rrhh', personality: 'unaware', mood: 'desconcertado', expertise: ['Selección', 'Formación'] },
+    superior: { id: 'superior', name: 'D. Ricardo Núñez', role: 'Órgano Superior / Autoridad', class: 'superior', personality: 'political', mood: 'impaciente', expertise: ['Gestión pública', 'Presupuestos'] },
+    csirt: { id: 'csirt', name: 'Eq. CCN-CERT', role: 'CSIRT de referencia', class: 'system', personality: 'neutral', mood: 'alerta', expertise: ['Respuesta incidentes', 'Threat Intel'] },
+    provider: { id: 'provider', name: 'CloudGov S.L.', role: 'Proveedor Cloud Qualificado', class: 'provider', personality: 'corporate', mood: 'defensivo', expertise: ['ENS cloud', 'Esquema de certificación'] }
 };
 
-// Controles ENS reales con sus familias
+// Controles ENS completos RD 311/2022 - Anexo II
 const ENS_CONTROLS = [
-    { code: 'MP.info.1', family: 'MP', name: 'Identificación y clasificación de la información' },
-    { code: 'MP.info.2', family: 'MP', name: 'Responsabilidades sobre la información' },
-    { code: 'MP.com.1', family: 'MP', name: 'Comunicaciones seguras' },
-    { code: 'MP.com.2', family: 'MP', name: 'Cifrado de comunicaciones' },
-    { code: 'MP.accesos.1', family: 'MP', name: 'Política de control de acceso' },
-    { code: 'MP.accesos.2', family: 'MP', name: 'Principio de mínimo privilegio' },
-    { code: 'MP.accesos.3', family: 'MP', name: 'Autenticación fuerte' },
-    { code: 'MP.log.1', family: 'MP', name: 'Registro de actividad' },
-    { code: 'MP.log.2', family: 'MP', name: 'Protección de registros' },
-    { code: 'MP.sistemas.1', family: 'MP', name: 'Configuración segura' },
-    { code: 'MP.sistemas.2', family: 'MP', name: 'Actualizaciones de seguridad' },
-    { code: 'MP.explo.1', family: 'MP', name: 'Explotación segura' },
-    { code: 'MP.explo.2', family: 'MP', name: 'Análisis de vulnerabilidades' },
-    { code: 'MP.cont.1', family: 'MP', name: 'Control de cambios' },
-    { code: 'MP.pro.1', family: 'MP', name: 'Protección del desarrollo' },
-    { code: 'MP.cert.1', family: 'MP', name: 'Certificados electrónicos' },
-    { code: 'OR.plan.1', family: 'OR', name: 'Plan de seguridad' },
-    { code: 'OR.pol.1', family: 'OR', name: 'Política de seguridad' },
-    { code: 'OR.aut.1', family: 'OR', name: 'Autorización del sistema' },
-    { code: 'OR.act.1', family: 'OR', name: 'Actividades de seguridad' },
-    { code: 'OR.rev.1', family: 'OR', name: 'Revisión de la seguridad' },
-    { code: 'OR.aud.1', family: 'OR', name: 'Auditoría de seguridad' },
-    { code: 'OR.cert.1', family: 'OR', name: 'Certificación del sistema' },
-    { code: 'OP.plan.1', family: 'OP', name: 'Planificación operativa' },
-    { code: 'OP.pol.1', family: 'OP', name: 'Políticas operativas' },
-    { code: 'OP.rec.1', family: 'OP', name: 'Recursos operativos' },
-    { code: 'OP.adq.1', family: 'OP', name: 'Adquisición segura' },
-    { code: 'OP.E3P.1', family: 'OP', name: 'Personal de provisión externa' },
-    { code: 'OP.cont.1', family: 'OP', name: 'Control operacional' },
-    { code: 'OP.cert.1', family: 'OP', name: 'Certificación de productos' },
-    { code: 'CP.plan.1', family: 'CP', name: 'Plan de continuidad' },
-    { code: 'CP.ra.1', family: 'CP', name: 'Análisis de riesgos' },
-    { code: 'CP.pb.1', family: 'CP', name: 'Planes de recuperación' },
-    { code: 'CP.ej.1', family: 'CP', name: 'Ejercicios y simulacros' },
-    { code: 'CP.rev.1', family: 'CP', name: 'Revisión de continuidad' },
-    { code: 'AT.info.1', family: 'AT', name: 'Información sobre accesos' },
-    { code: 'AT.id.1', family: 'AT', name: 'Identificación de usuarios' },
-    { code: 'AT.accesos.1', family: 'AT', name: 'Control de accesos físicos' },
-    { code: 'AT.aut.1', family: 'AT', name: 'Autorización de accesos' },
-    { code: 'PT.pers.1', family: 'PT', name: 'Personal de seguridad' },
-    { code: 'PT.loc.1', family: 'PT', name: 'Protección de localizaciones' },
-    { code: 'PT.equ.1', family: 'PT', name: 'Protección de equipos' },
-    { code: 'PT.sis.1', family: 'PT', name: 'Protección de sistemas' },
-    { code: 'PT.com.1', family: 'PT', name: 'Protección de comunicaciones' },
-    { code: 'PT.med.1', family: 'PT', name: 'Protección de medios' },
-    { code: 'RC.inc.1', family: 'RC', name: 'Gestión de incidentes' },
-    { code: 'RC.rev.1', family: 'RC', name: 'Revisión de incidentes' },
-    { code: 'RC.pr.1', family: 'RC', name: 'Protección de derechos' },
-    { code: 'RC.com.1', family: 'RC', name: 'Comunicación de brechas' },
-    { code: 'RC.mej.1', family: 'RC', name: 'Mejora continua' }
+    // MP - MEDIDAS DE PROTECCIÓN
+    { code: 'MP.info.1', family: 'MP', name: 'Identificación de la información', level: 'baja', desc: 'Inventario y clasificación de activos de información' },
+    { code: 'MP.info.2', family: 'MP', name: 'Clasificación de la información', level: 'baja', desc: 'Clasificación según confidencialidad, integridad, autenticidad, trazabilidad' },
+    { code: 'MP.info.3', family: 'MP', name: 'Responsabilidades sobre la información', level: 'media', desc: 'Propietarios y custodios de la información' },
+    { code: 'MP.com.1', family: 'MP', name: 'Comunicaciones seguras', level: 'media', desc: 'Protección de comunicaciones electrónicas' },
+    { code: 'MP.com.2', family: 'MP', name: 'Cifrado de comunicaciones', level: 'alta', desc: 'Cifrado extremo a extremo TLS 1.3/IPSec' },
+    { code: 'MP.sistemas.1', family: 'MP', name: 'Configuración segura', level: 'media', desc: 'Hardening de sistemas según CIS Benchmarks' },
+    { code: 'MP.sistemas.2', family: 'MP', name: 'Actualizaciones de seguridad', level: 'media', desc: 'Gestión de parches y vulnerabilidades' },
+    { code: 'MP.sistemas.3', family: 'MP', name: 'Anticódigo maligno', level: 'baja', desc: 'Protección antivirus/antimalware' },
+    { code: 'MP.sistemas.4', family: 'MP', name: 'Protección en sistemas virtualizados', level: 'alta', desc: 'Seguridad en hipervisores y VMs' },
+    { code: 'MP.log.1', family: 'MP', name: 'Registro de actividad', level: 'media', desc: 'Logs de eventos de seguridad' },
+    { code: 'MP.log.2', family: 'MP', name: 'Protección de registros', level: 'media', desc: 'Integridad y confidencialidad de logs' },
+    { code: 'MP.log.3', family: 'MP', name: 'Sincronización horaria', level: 'baja', desc: 'NTP sincronizado para correlación' },
+    { code: 'MP.cont.1', family: 'MP', name: 'Control de cambios', level: 'media', desc: 'Gestión formal de cambios' },
+    { code: 'MP.cont.2', family: 'MP', name: 'Análisis de vulnerabilidades', level: 'alta', desc: 'Pentesting y escaneos periódicos' },
+    { code: 'MP.pro.1', family: 'MP', name: 'Explotación segura', level: 'media', desc: 'Separación entornos desarrollo/producción' },
+    { code: 'MP.pro.2', family: 'MP', name: 'Validación de código', level: 'alta', desc: 'Análisis estático/dinámico de código' },
+    { code: 'MP.cert.1', family: 'MP', name: 'Certificados electrónicos', level: 'media', desc: 'Gestión de certificados y claves' },
+    { code: 'MP.persist.1', family: 'MP', name: 'Copias de seguridad', level: 'baja', desc: 'Backups seguros y probados' },
+    { code: 'MP.persist.2', family: 'MP', name: 'Almacenamiento seguro', level: 'media', desc: 'Cifrado de datos en reposo' },
+    // OR - MEDIDAS ORGANIZATIVAS
+    { code: 'OR.plan.1', family: 'OR', name: 'Plan de Seguridad', level: 'baja', desc: 'Documento de seguridad del sistema' },
+    { code: 'OR.pol.1', family: 'OR', name: 'Política de Seguridad', level: 'baja', desc: 'PSI aprobada por el Órgano Superior' },
+    { code: 'OR.pol.2', family: 'OR', name: 'Políticas específicas', level: 'media', desc: 'Políticas de control acceso, backups, etc.' },
+    { code: 'OR.aut.1', family: 'OR', name: 'Autorización del sistema', level: 'baja', desc: 'Autorización formal del Órgano Superior' },
+    { code: 'OR.act.1', family: 'OR', name: 'Actividades de seguridad', level: 'media', desc: 'Concienciación y formación' },
+    { code: 'OR.rev.1', family: 'OR', name: 'Revisión de la seguridad', level: 'media', desc: 'Revisiones periódicas' },
+    { code: 'OR.aud.1', family: 'OR', name: 'Auditoría de seguridad', level: 'alta', desc: 'Auditorías periódicas cada 2 años (alta)' },
+    { code: 'OR.cert.1', family: 'OR', name: 'Certificación del sistema', level: 'alta', desc: 'Certificación por entidad acreditada' },
+    { code: 'OR.human.1', family: 'OR', name: 'Selección de personal', level: 'media', desc: 'Verificación de antecedentes' },
+    { code: 'OR.human.2', family: 'OR', name: 'Formación en seguridad', level: 'media', desc: 'Formación continua' },
+    { code: 'OR.human.3', family: 'OR', name: 'Régimen disciplinario', level: 'media', desc: 'Sanciones por incumplimiento' },
+    // OP - MEDIDAS OPERACIONALES
+    { code: 'OP.plan.1', family: 'OP', name: 'Planificación operativa', level: 'media', desc: 'Procedimientos operativos documentados' },
+    { code: 'OP.pol.1', family: 'OP', name: 'Políticas operativas', level: 'media', desc: 'Instrucciones técnicas' },
+    { code: 'OP.rec.1', family: 'OP', name: 'Recursos operativos', level: 'media', desc: 'Recursos suficientes para seguridad' },
+    { code: 'OP.adq.1', family: 'OP', name: 'Adquisición segura', level: 'media', desc: 'Cláusulas de seguridad en contratos' },
+    { code: 'OP.E3P.1', family: 'OP', name: 'Personal externo', level: 'media', desc: 'Control de proveedores y subcontratas' },
+    { code: 'OP.cont.1', family: 'OP', name: 'Control operacional', level: 'media', desc: 'Monitorización continua' },
+    { code: 'OP.cert.1', family: 'OP', name: 'Certificación de productos', level: 'alta', desc: 'Productos certificados CCN-STIC' },
+    { code: 'OP.inc.1', family: 'OP', name: 'Gestión de incidencias', level: 'media', desc: 'Procedimiento de gestión' },
+    // CP - CONTINUIDAD DEL SERVICIO
+    { code: 'CP.plan.1', family: 'CP', name: 'Análisis impacto negocio', level: 'alta', desc: 'BIA con RTO/RPO definidos' },
+    { code: 'CP.ra.1', family: 'CP', name: 'Análisis de riesgos', level: 'media', desc: 'Análisis formal de riesgos' },
+    { code: 'CP.pb.1', family: 'CP', name: 'Plan de continuidad', level: 'alta', desc: 'Plan documentado y probado' },
+    { code: 'CP.ej.1', family: 'CP', name: 'Ejercicios de simulacro', level: 'alta', desc: 'Simulacros anuales' },
+    { code: 'CP.rev.1', family: 'CP', name: 'Revisión de continuidad', level: 'media', desc: 'Revisión tras incidentes' },
+    // PT - PROTECCIÓN
+    { code: 'PT.pers.1', family: 'PT', name: 'Control de accesos físicos', level: 'media', desc: 'Control de accesos a instalaciones' },
+    { code: 'PT.loc.1', family: 'PT', name: 'Protección de localizaciones', level: 'media', desc: 'CPDs con control ambiental' },
+    { code: 'PT.equ.1', family: 'PT', name: 'Protección de equipos', level: 'baja', desc: 'Protección física de equipos' },
+    { code: 'PT.sis.1', family: 'PT', name: 'Protección de soportes', level: 'media', desc: 'Gestión de medios extraíbles' },
+    { code: 'PT.com.1', family: 'PT', name: 'Protección de cableado', level: 'media', desc: 'Protección de infraestructura' },
+    { code: 'PT.med.1', family: 'PT', name: 'Normas de escritorio limpio', level: 'media', desc: 'Política de escritorio y pantalla limpios' },
+    // RC - REACCIONES
+    { code: 'RC.inc.1', family: 'RC', name: 'Gestión de incidentes', level: 'media', desc: 'Procedimiento de respuesta' },
+    { code: 'RC.inc.2', family: 'RC', name: 'Comunicación de incidentes', level: 'alta', desc: 'Notificación al CCN-CERT' },
+    { code: 'RC.rev.1', family: 'RC', name: 'Lecciones aprendidas', level: 'media', desc: 'Análisis post-incidente' },
+    { code: 'RC.pr.1', family: 'RC', name: 'Plan de mejora', level: 'media', desc: 'Mejora continua' },
+    { code: 'RC.mej.1', family: 'RC', name: 'Mejora continua', level: 'media', desc: 'Indicadores y métricas' }
 ];
 
-// Hallazgos posibles con sus diálogos asociados
+// Hallazgos realistas
 const FINDINGS_DB = [
     {
-        code: 'NC-M-001', control: 'MP.com.2', severity: 'major',
+        code: 'NC-M-001', control: 'MP.com.2', severity: 'major', risk: { p: 4, i: 5 },
         title: 'Ausencia de cifrado TLS 1.3 en comunicaciones internas',
-        description: 'Tráfico entre microservicios en puerto 80 sin cifrar. Datos de carácter personal expuestos en red interna.',
-        evidence: { file: 'pcap_internal_sniff_20260614.pcap', hash: 'a3f5b8c2d1e9f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3', content: 'HTTP POST /api/pacientes con DNI y diagnósticos en claro. 2.347 registros capturados en 15 minutos.' },
+        description: 'Tráfico entre microservicios en puerto 80 sin cifrar. Datos de carácter personal expuestos en red interna. Se han capturado 2.347 peticiones HTTP con DNI y diagnósticos en claro en 15 minutos.',
+        remediation: 'Implementar mTLS entre todos los microservicios. Migrar a TLS 1.3 con cipher suites fuertes. Deshabilitar HTTP plano.',
+        evidence: { file: 'pcap_internal_sniff_20260614.pcap', hash: 'a3f5b8c2d1e9f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3', content: 'HTTP POST /api/pacientes con DNI y diagnósticos en claro. 2.347 registros capturados en 15 minutos en segmento 10.20.30.0/24.' },
         dialogues: [
             { actor: 'auditor_tec', text: 'He capturado tráfico en el segmento 10.20.30.0/24. Confirmado: HTTP plano con datos sensibles. Esto es una No Conformidad Mayor inmediata.' },
             { actor: 'ciso', text: 'Ese segmento está aislado... o debería estarlo. El equipo de desarrollo desplegó una API legacy sin consultar a seguridad.' },
-            { actor: 'auditor_lider', text: 'La segmentación no justifica la ausencia de cifrado. RD 311/2022 es claro: MP.com.2 exige cifrado en todas las comunicaciones que transporten datos del sistema. ¿Tienen inventario de APIs?' },
+            { actor: 'auditor_lider', text: 'La segmentación no justifica la ausencia de cifrado. RD 311/2022 es claro: MP.com.2 exige cifrado en todas las comunicaciones que transporten datos del sistema.' },
             { actor: 'dpo', text: 'Si esos datos son de pacientes, estamos ante una brecha nivel 3. Notificación a AEPD en menos de 72 horas o sanción de hasta 20M€.' }
         ]
     },
     {
-        code: 'NC-M-002', control: 'MP.accesos.3', severity: 'major',
-        title: 'Cuentas de servicio sin autenticación fuerte ni rotación',
-        description: '14 cuentas de servicio con contraseñas estáticas sin rotación desde hace más de 180 días. Sin MFA.',
-        evidence: { file: 'service_accounts_audit.csv', hash: '9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d', content: 'svc_backup, svc_db_prod, svc_api_legacy... 14 cuentas. Última rotación: 2025-11-03. Autenticación: NTLMv2 sin MFA.' },
+        code: 'NC-M-002', control: 'MP.sistemas.2', severity: 'major', risk: { p: 5, i: 5 },
+        title: 'Vulnerabilidades críticas sin parchear en sistemas expuestos',
+        description: '8 servidores con CVEs críticas (CVSS 9.8) explotables públicamente. Ventana de parcheo superada en más de 120 días. Incluye Log4Shell residual y vulnerabilidades en proxies.',
+        remediation: 'Parcheo urgente en ventana de 72h. Compensación con WAF y segmentación hasta verificación.',
+        evidence: { file: 'nessus_scan_critical_20260614.pdf', hash: '9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d', content: 'CVE-2026-1234 (CVSS 9.8) en 3 servidores web. CVE-2026-5678 (CVSS 9.1) en 2 proxies. CVE-2021-44228 (Log4Shell) residual en 1 app legacy. Antigüedad media: 127 días.' },
         dialogues: [
-            { actor: 'auditor_tec', text: 'Extrayendo el listado de cuentas de servicio del AD. 14 cuentas con password never expire. Sin MFA. La más antigua tiene 3 años sin rotar.' },
-            { actor: 'sysadmin', text: 'Es que si las rotamos se cae el backup... el script del legacy no soporta credenciales dinámicas. Llevamos años pidiendo presupuesto para refactorizar.' },
-            { actor: 'auditor_lider', text: 'La limitación técnica no exime del cumplimiento. MP.accesos.3 exige autenticación fuerte para cuentas de servicio. Esto es No Conformidad Mayor.' },
-            { actor: 'ciso', text: 'Asumo el hallazgo. Propongo como compensación monitorización reforzada con SIEM y alertas en tiempo real hasta la migración.' }
+            { actor: 'auditor_tec', text: 'El último escaneo Nessus muestra 8 servidores con CVEs críticas explotables. Uno tiene Log4Shell residual desde hace 4 años.' },
+            { actor: 'sysadmin', text: 'Ese servidor legacy no se puede parchear sin romper la aplicación. El proveedor quebró en 2022 y no hay soporte.' },
+            { actor: 'auditor_lider', text: 'MP.sistemas.2 establece un máximo de 30 días para parches críticos en sistemas de categoría alta. La falta de proveedor no exime. Es No Conformidad Mayor.' },
+            { actor: 'ciso', text: 'Propongo aislar completamente ese servidor detrás de un WAF con reglas específicas y planificar su sustitución en Q3.' }
         ]
     },
     {
-        code: 'NC-m-003', control: 'MP.sistemas.2', severity: 'minor',
-        title: 'Parches de seguridad críticos con más de 60 días sin aplicar',
-        description: '12 servidores críticos con parches de seguridad pendientes. 3 con vulnerabilidades CVE críticas conocidas.',
-        evidence: { file: 'vulnerability_scan_Q2_2026.pdf', hash: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b', content: 'Nessus scan: 12 hosts con CVSS>9.0. CVE-2026-1234 (Windows Server), CVE-2026-5678 (OpenSSL). Ventana de parcheo superada: 67 días promedio.' },
+        code: 'NC-M-003', control: 'MP.log.1', severity: 'major', risk: { p: 4, i: 4 },
+        title: 'Registros de auditoría incompletos y sin protección de integridad',
+        description: 'Faltan eventos críticos en 6 aplicaciones. Logs almacenados sin protección de integridad. Retención de solo 6 meses cuando se exigen 18 para categoría alta.',
+        remediation: 'Implementar SIEM centralizado con protección de integridad. Extender retención a 18 meses. Configurar logging en todas las aplicaciones.',
+        evidence: { file: 'log_audit_20260614.xlsx', hash: 'f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4', content: 'Apps sin logging: ERP, CRM, Portal Empleado, Intranet, App RRHH, Gestión Documental. Retención actual: 6 meses. Sin firma digital de logs.' },
         dialogues: [
-            { actor: 'auditor_tec', text: 'El último escaneo Nessus muestra 12 servidores críticos fuera de ventana de parcheo. Tres con CVEs críticas explotables.' },
-            { actor: 'sysadmin', text: 'Tenemos un change advisory board que se reúne cada 15 días. Algunos parches requieren validación con los proveedores de las aplicaciones...' },
-            { actor: 'auditor_lider', text: 'MP.sistemas.2 establece un máximo de 30 días para parches críticos en sistemas de categoría alta. Están fuera de plazo.' },
-            { actor: 'ciso', text: 'Revisaremos el procedimiento de gestión de cambios. Propongo un canal de emergencia para parches críticos con SLA de 72 horas.' }
+            { actor: 'auditor_tec', text: 'Revisando la configuración de logs. Seis aplicaciones críticas no registran eventos de seguridad. Y la retención es de solo 6 meses.' },
+            { actor: 'sysadmin', text: 'El SIEM tiene capacidad limitada. Los logs antiguos se comprimen y se archivan en cold storage.' },
+            { actor: 'auditor_lider', text: 'MP.log.2 exige disponibilidad inmediata durante el periodo de retención. Y MP.log.1 exige cobertura completa. Son dos No Conformidades Mayores.' },
+            { actor: 'dpo', text: 'Sin logs completos no podemos demostrar cumplimiento en caso de brecha. Esto es crítico.' }
         ]
     },
     {
-        code: 'NC-m-004', control: 'MP.log.1', severity: 'minor',
-        title: 'Registros de auditoría incompletos en sistemas críticos',
-        description: 'Faltan eventos de autenticación fallida en 4 aplicaciones críticas. Retención de logs inferior a 18 meses.',
-        evidence: { file: 'log_retention_analysis.xlsx', hash: 'f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4', content: 'Apps: ERP, CRM, Portal Empleado, Intranet. Retención actual: 6 meses. Requerido ENS: 18 meses mínimo para categoría alta.' },
+        code: 'NC-M-004', control: 'CP.pb.1', severity: 'major', risk: { p: 3, i: 5 },
+        title: 'Plan de recuperación ante desastres no probado en 28 meses',
+        description: 'El último ejercicio de simulacro fue hace más de 2 años. RTO/RPO declarados no validados. En el último simulacro real (2024) se superó el RTO en un 180%.',
+        remediation: 'Ejecutar simulacro completo en 60 días. Validar RTO/RPO. Documentar lecciones aprendidas.',
+        evidence: { file: 'dr_drill_report_2024.pdf', hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2', content: 'Último simulacro: 2024-03-15. RTO declarado: 4h. RTO real: 11h 23min. RPO declarado: 1h. RPO real: 6h 45min. Fallos en 3 de 5 sistemas críticos.' },
         dialogues: [
-            { actor: 'auditor_tec', text: 'Revisando la configuración de logs. Cuatro aplicaciones críticas no registran intentos de autenticación fallida. Y la retención es de solo 6 meses.' },
-            { actor: 'sysadmin', text: 'El SIEM tiene capacidad limitada. Los logs antiguos se comprimen y se archivan en cold storage, pero no están accesibles en caliente.' },
-            { actor: 'auditor_lider', text: 'MP.log.2 exige disponibilidad inmediata de los registros durante el periodo de retención. Cold storage no cumple. Es No Conformidad Menor.' },
-            { actor: 'dpo', text: 'Además, sin logs de autenticación fallida no podemos detectar ataques de fuerza bruta. Esto impacta directamente en nuestra capacidad de notificar brechas.' }
+            { actor: 'auditor_lider', text: '¿Cuándo fue el último ejercicio del plan de continuidad? Veo en el registro que marzo de 2024. Han pasado 28 meses.' },
+            { actor: 'ciso', text: 'Iba a programarse en Q4 de 2025 pero se pospuso por la migración a cloud.' },
+            { actor: 'auditor_lider', text: 'CP.ej.1 exige ejercicios al menos anuales. Y los RTO/RPO deben validarse. No Conformidad Mayor.' },
+            { actor: 'superior', text: 'Asumo la responsabilidad. Autorizo la ejecución inmediata del simulacro en las próximas 4 semanas.' }
         ]
     },
     {
-        code: 'NC-M-005', control: 'CP.pb.1', severity: 'major',
-        title: 'Plan de recuperación ante desastres no probado en 24 meses',
-        description: 'El último ejercicio de simulacro de recuperación fue hace más de 2 años. RTO/RPO no validados.',
-        evidence: { file: 'dr_drill_report_2024.pdf', hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2', content: 'Último simulacro: 2024-03-15. RTO declarado: 4h. RTO real medido: 11h 23min. RPO declarado: 1h. RPO real: 6h 45min. Fallos en 3 de 5 sistemas críticos.' },
+        code: 'NC-M-005', control: 'OR.aud.1', severity: 'major', risk: { p: 3, i: 3 },
+        title: 'Ausencia de auditoría periódica en sistemas de categoría alta',
+        description: 'El sistema no ha sido auditado en los últimos 3 años cuando la categoría alta exige auditoría cada 2 años según RD 311/2022.',
+        remediation: 'Contratar auditoría externa acreditada ENAC en plazo de 90 días.',
+        evidence: { file: 'audit_history.csv', hash: 'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3', content: 'Última auditoría: 2023-04-12. Categoría: ALTA. Periodicidad exigida: 24 meses. Retraso actual: 14 meses.' },
         dialogues: [
-            { actor: 'auditor_lider', text: '¿Cuándo fue el último ejercicio del plan de continuidad? Veo en el registro que marzo de 2024. Han pasado más de 24 meses.' },
-            { actor: 'ciso', text: 'Iba a programarse en Q4 de 2025 pero se pospuso por la migración a cloud. Está reprogramado para septiembre de 2026.' },
-            { actor: 'auditor_lider', text: 'CP.ej.1 exige ejercicios al menos anuales. Y los RTO/RPO deben validarse. Esto es No Conformidad Mayor. ¿Tienen análisis de impacto actualizado?' },
-            { actor: 'superior', text: 'Asumo la responsabilidad. Autorizo la ejecución inmediata del simulacro, aunque sea parcial, en las próximas 4 semanas.' }
+            { actor: 'auditor_lider', text: 'La última auditoría fue en abril de 2023. Han pasado más de 3 años. Para categoría alta el máximo es 24 meses.' },
+            { actor: 'resp_sistema', text: 'Se había presupuestado para 2025 pero se recortó el gasto. Es una decisión del Órgano Superior.' },
+            { actor: 'auditor_lider', text: 'OR.aud.1 es de cumplimiento obligatorio. No hay justificación presupuestaria válida. No Conformidad Mayor.' }
         ]
     },
     {
-        code: 'OBS-001', control: 'OR.pol.1', severity: 'observation',
-        title: 'Política de Seguridad no revisada en el último año',
-        description: 'La PSI fue aprobada en 2023 y no ha sido revisada desde entonces. Cambios organizativos no reflejados.',
-        evidence: { file: 'PSI_v3.2_2023.pdf', hash: 'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3', content: 'PSI versión 3.2 aprobada el 15/06/2023. Última revisión programada: 15/06/2024 (no ejecutada). Cambios organizativos desde entonces: 3 reestructuraciones, 1 fusión de departamentos.' },
+        code: 'NC-m-006', control: 'MP.sistemas.1', severity: 'minor', risk: { p: 3, i: 3 },
+        title: 'Configuraciones inseguras en servidores críticos',
+        description: '15 servidores con configuraciones que no siguen CIS Benchmarks. Servicios innecesarios activos, contraseñas por defecto en 3 casos.',
+        remediation: 'Aplicar hardening CIS L1 en todos los servidores. Validar con escaneo de cumplimiento.',
+        evidence: { file: 'cis_benchmark_scan.pdf', hash: 'c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4', content: '15 servidores con score CIS <60%. 3 servidores con contraseñas por defecto (admin/admin). 22 servicios innecesarios activos. Firewall host deshabilitado en 8 servidores.' },
         dialogues: [
-            { actor: 'auditor_lider', text: 'La PSI tiene fecha de revisión anual. Veo que la última aprobación fue en junio de 2023. ¿Por qué no se ha revisado?' },
-            { actor: 'ciso', text: 'Las reestructuraciones organizativas han complicado la revisión. Estamos esperando a que se estabilice la nueva estructura para actualizarla.' },
-            { actor: 'auditor_lider', text: 'OR.pol.1 exige revisión al menos anual. Es una Observación, pero debe corregirse en el PAC.' }
+            { actor: 'auditor_tec', text: 'El escaneo CIS muestra 15 servidores con configuraciones inseguras. Peor: tres tienen credenciales por defecto.' },
+            { actor: 'sysadmin', text: 'Esos tres son legacy. Los dejamos así porque la aplicación no funciona con otro usuario.' },
+            { actor: 'auditor_lider', text: 'MP.sistemas.1 exige hardening. Las credenciales por defecto son inaceptables. No Conformidad Menor.' }
         ]
     },
     {
-        code: 'OBS-002', control: 'OP.E3P.1', severity: 'observation',
-        title: 'Contratos con proveedores sin cláusulas de seguridad específicas',
-        description: 'El 35% de los contratos con proveedores de servicios cloud no incluyen cláusulas ENS específicas.',
-        evidence: { file: 'vendor_contracts_review.docx', hash: 'c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4', content: 'Revisión de 40 contratos: 14 sin cláusula de auditoría, 18 sin SLA de seguridad, 9 sin mención al ENS. Proveedores afectados: AWS, Azure, Salesforce, Zendesk.' },
+        code: 'NC-m-007', control: 'MP.persist.1', severity: 'minor', risk: { p: 3, i: 4 },
+        title: 'Copias de seguridad sin pruebas de restauración',
+        description: 'Se realizan backups diarios pero no se han probado restauraciones en los últimos 14 meses. Última prueba documentada: marzo 2025.',
+        remediation: 'Establecer calendario trimestral de pruebas de restauración documentadas.',
+        evidence: { file: 'backup_test_log.xlsx', hash: 'd4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5', content: 'Última prueba restauración: 2025-03-22. Frecuencia declarada: trimestral. Retención declarada: 30 días. Sin evidencia de pruebas en 14 meses.' },
         dialogues: [
-            { actor: 'auditor_lider', text: 'Revisando los contratos con proveedores de servicios en la nube. Detecto que un porcentaje significativo no incluye cláusulas de seguridad alineadas con ENS.' },
-            { actor: 'dpo', text: 'Legal está trabajando en un anexo de seguridad tipo para todos los proveedores. El proceso es lento porque cada proveedor negocia sus propios términos.' },
-            { actor: 'auditor_lider', text: 'OP.adq.1 exige que los contratos reflejen las exigencias de seguridad. Es una Observación que debe resolverse.' }
+            { actor: 'auditor_tec', text: 'Los backups se ejecutan, pero no hay pruebas de restauración documentadas desde marzo de 2025.' },
+            { actor: 'sysadmin', text: 'Hacemos pruebas internas pero no las documentamos formalmente.' },
+            { actor: 'auditor_lider', text: 'MP.persist.1 exige pruebas periódicas. Sin documentación no es auditable. No Conformidad Menor.' }
         ]
     },
     {
-        code: 'FORT-001', control: 'RC.inc.1', severity: 'strength',
-        title: 'Procedimiento de gestión de incidentes maduro y probado',
-        description: 'El CSIRT interno tiene procedimientos documentados, probados y alineados con la guía CCN-STIC-805.',
-        evidence: { file: 'CSIRT_procedures_v5.pdf', hash: 'd4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5', content: 'Procedimientos RC-001 a RC-012. Último ejercicio de mesa: 2026-02-10. Tiempo medio de detección: 14 min. Tiempo medio de contención: 47 min. 23 incidentes gestionados en 2025, todos cerrados.' },
+        code: 'NC-m-008', control: 'OP.E3P.1', severity: 'minor', risk: { p: 3, i: 3 },
+        title: 'Contratos con proveedores sin cláusulas de seguridad',
+        description: 'El 40% de los contratos con proveedores de servicios no incluyen cláusulas ENS específicas ni derecho de auditoría.',
+        remediation: 'Revisar todos los contratos y añadir anexos de seguridad. Priorizar proveedores críticos.',
+        evidence: { file: 'vendor_contracts_review.docx', hash: 'e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6', content: '40 contratos revisados. 16 sin cláusula de auditoría. 18 sin SLA de seguridad. 12 sin mención al ENS. Proveedores: AWS, Azure, Salesforce, Zendesk, Atlassian.' },
         dialogues: [
-            { actor: 'auditor_tec', text: 'He revisado el procedimiento de gestión de incidentes del CSIRT. Está muy bien documentado, con lecciones aprendidas de cada incidente.' },
-            { actor: 'auditor_lider', text: 'Debo reconocer que la madurez del proceso de gestión de incidentes es notable. Lo registramos como Fortaleza.' },
-            { actor: 'ciso', text: 'Gracias. Invertimos mucho en el CSIRT después del incidente de 2023. Ha dado sus frutos.' }
+            { actor: 'auditor_legal', text: 'Revisando contratos con proveedores cloud. El 40% no incluye cláusulas de seguridad alineadas con ENS.' },
+            { actor: 'dpo', text: 'Legal está trabajando en un anexo tipo. El proceso es lento porque cada proveedor negocia.' },
+            { actor: 'auditor_lider', text: 'OP.adq.1 y OP.E3P.1 exigen contratos con exigencias de seguridad. No Conformidad Menor.' }
+        ]
+    },
+    {
+        code: 'NC-m-009', control: 'OR.act.1', severity: 'minor', risk: { p: 2, i: 3 },
+        title: 'Programa de concienciación sin verificar eficacia',
+        description: 'Se imparten formaciones anuales pero no se mide su eficacia. No hay simulacros de phishing para evaluar el factor humano.',
+        remediation: 'Implementar campañas de phishing simulado trimestrales. Medir KPIs de concienciación.',
+        evidence: { file: 'awareness_program_2025.pdf', hash: 'f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7', content: 'Formación anual impartida a 78% de la plantilla. Sin evaluación posterior. Sin campañas de phishing. Sin métricas de eficacia.' },
+        dialogues: [
+            { actor: 'auditor_lider', text: 'El programa de concienciación se imparte pero no se mide su eficacia. ¿Hacen simulacros de phishing?' },
+            { actor: 'rrhh', text: 'No, nunca lo hemos considerado. La formación es teórica.' },
+            { actor: 'auditor_lider', text: 'OR.act.1 exige verificar la eficacia. No Conformidad Menor.' }
+        ]
+    },
+    {
+        code: 'OBS-001', control: 'OR.pol.1', severity: 'observation', risk: { p: 2, i: 2 },
+        title: 'Política de Seguridad no revisada en 18 meses',
+        description: 'La PSI fue aprobada en 2023 y no ha sido revisada. Cambios organizativos no reflejados.',
+        remediation: 'Revisar y actualizar PSI en 60 días. Establecer calendario de revisión anual.',
+        evidence: { file: 'PSI_v3.2_2023.pdf', hash: 'a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8', content: 'PSI versión 3.2 aprobada 15/06/2023. Última revisión programada: 15/06/2024 (no ejecutada). Cambios organizativos: 3 reestructuraciones.' },
+        dialogues: [
+            { actor: 'auditor_lider', text: 'La PSI tiene revisión anual. Veo que la última aprobación fue en junio de 2023.' },
+            { actor: 'ciso', text: 'Las reestructuraciones han complicado la revisión.' },
+            { actor: 'auditor_lider', text: 'OR.pol.1 exige revisión al menos anual. Es Observación.' }
+        ]
+    },
+    {
+        code: 'OBS-002', control: 'CP.ra.1', severity: 'observation', risk: { p: 2, i: 3 },
+        title: 'Análisis de riesgos con metodología no homogénea',
+        description: 'El análisis de riesgos usa una metodología propia no alineada con Magerit v3. Algunos activos no están evaluados.',
+        remediation: 'Homogeneizar metodología a Magerit v3. Completar inventario de activos.',
+        evidence: { file: 'risk_analysis_method.pdf', hash: 'b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9', content: 'Metodología propia "RiskEval 2.0". No mapeada a Magerit v3. 12% de activos sin evaluar. Escalas de impacto no calibradas.' },
+        dialogues: [
+            { actor: 'auditor_lider', text: 'El análisis de riesgos usa metodología propia. ¿Por qué no Magerit v3?' },
+            { actor: 'ciso', text: 'Es una herramienta interna más adaptada a nuestra realidad.' },
+            { actor: 'auditor_lider', text: 'CP.ra.1 recomienda Magerit. Usar metodología propia es aceptable si está debidamente documentada y mapeada. Es Observación.' }
+        ]
+    },
+    {
+        code: 'OBS-003', control: 'MP.cont.2', severity: 'observation', risk: { p: 2, i: 2 },
+        title: 'Pentesting con alcance limitado',
+        description: 'El último pentesting solo cubrió la aplicación web principal. No incluyó infraestructura, APIs internas ni ingeniería social.',
+        remediation: 'Ampliar alcance a toda la superficie de ataque. Incluir ingeniería social y APIs.',
+        evidence: { file: 'pentest_report_2025.pdf', hash: 'c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0', content: 'Pentesting 2025: solo web principal. Sin APIs internas. Sin infraestructura. Sin ingeniería social. Sin pruebas de movilidad.' },
+        dialogues: [
+            { actor: 'auditor_tec', text: 'El pentesting solo cubrió la web. ¿Qué hay de APIs, infraestructura, ingeniería social?' },
+            { actor: 'ciso', text: 'Presupuestamos un alcance básico. El completo triplica el coste.' },
+            { actor: 'auditor_lider', text: 'MP.cont.2 recomienda análisis de vulnerabilidades completo. Es Observación.' }
+        ]
+    },
+    {
+        code: 'FORT-001', control: 'RC.inc.1', severity: 'strength', risk: { p: 1, i: 1 },
+        title: 'CSIRT maduro con procedimientos probados',
+        description: 'El CSIRT interno tiene procedimientos documentados, probados y alineados con CCN-STIC-805. Tiempos de respuesta excelentes.',
+        evidence: { file: 'CSIRT_procedures_v5.pdf', hash: 'd0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1', content: 'Procedimientos RC-001 a RC-012. Último ejercicio: 2026-02-10. MTTD: 14 min. MTTC: 47 min. 23 incidentes en 2025, todos cerrados.' },
+        dialogues: [
+            { actor: 'auditor_tec', text: 'He revisado el procedimiento del CSIRT. Está muy bien documentado, con lecciones aprendidas.' },
+            { actor: 'auditor_lider', text: 'La madurez del proceso de gestión de incidentes es notable. Lo registramos como Fortaleza.' },
+            { actor: 'ciso', text: 'Invertimos mucho en el CSIRT después del incidente de 2023.' }
+        ]
+    },
+    {
+        code: 'FORT-002', control: 'MP.cert.1', severity: 'strength', risk: { p: 1, i: 1 },
+        title: 'Gestión robusta de certificados electrónicos',
+        description: 'Inventario completo de certificados con monitorización de caducidades. Renovación automática. Uso de certificados FNMT.',
+        evidence: { file: 'cert_inventory_2026.xlsx', hash: 'e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2', content: '127 certificados inventariados. 0 caducados. Renovación automática 30 días antes. 100% FNMT o AC reconocidas.' },
+        dialogues: [
+            { actor: 'auditor_tec', text: 'La gestión de certificados es ejemplar. Inventario completo, monitorización activa, sin caducidades.' },
+            { actor: 'auditor_lider', text: 'Registrado como Fortaleza en MP.cert.1.' }
+        ]
+    },
+    {
+        code: 'FORT-003', control: 'OR.human.2', severity: 'strength', risk: { p: 1, i: 1 },
+        title: 'Equipo de seguridad con certificaciones avanzadas',
+        description: 'El equipo de seguridad cuenta con certificaciones CISSP, CISA, CISM y OSSTMP. Formación continua.',
+        evidence: { file: 'team_certifications.pdf', hash: 'f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3', content: 'CISO: CISSP, CISM. Auditor interno: CISA, ISO 27001 Lead Auditor. Admin seguridad: OSCP, OSSTMP. Formación media: 80h/año por profesional.' },
+        dialogues: [
+            { actor: 'auditor_lider', text: 'El equipo tiene certificaciones internacionales de alto nivel. Es una fortaleza organizativa.' }
         ]
     }
 ];
 
-// Decisiones interactivas
+// Decisiones
 const DECISIONS = [
     {
         question: 'El CISO solicita una extensión de 48h para presentar evidencia adicional sobre el hallazgo NC-M-001. ¿Cómo procedes?',
         options: [
-            { text: 'Denegar: la integridad de la auditoría exige transparencia inmediata.', effect: 'hostile', response: 'auditor_lider', responseText: 'Denegado. El plazo es improrrogable. La falta de evidencia se interpretará como no conformidad confirmada.' },
-            { text: 'Conceder 24h: plazo razonable con compromiso formal.', effect: 'neutral', response: 'auditor_lider', responseText: 'Concedo 24 horas. Pero exijo compromiso formal por escrito del Órgano Superior. No habrá más extensiones.' },
-            { text: 'Conceder 48h: flexibilidad operativa.', effect: 'soft', response: 'ciso', responseText: 'Gracias. Movilizaré todos los recursos necesarios. Tendrán la evidencia completa en el plazo concedido.' }
+            { text: 'Denegar: la integridad de la auditoría exige transparencia inmediata.', effect: 'hostile', score: -10, response: 'auditor_lider', responseText: 'Denegado. El plazo es improrrogable. La falta de evidencia se interpretará como no conformidad confirmada.', moodChange: { ciso: 'enfurecido' } },
+            { text: 'Conceder 24h: plazo razonable con compromiso formal.', effect: 'neutral', score: 5, response: 'auditor_lider', responseText: 'Concedo 24 horas. Pero exijo compromiso formal por escrito del Órgano Superior.', moodChange: { ciso: 'aliviado' } },
+            { text: 'Conceder 48h: flexibilidad operativa completa.', effect: 'soft', score: -5, response: 'ciso', responseText: 'Gracias. Movilizaré todos los recursos necesarios.', moodChange: { ciso: 'confiado' } }
         ]
     },
     {
-        question: 'El Administrador revela que los fallos de seguridad se deben a falta de presupuesto aprobado por el Órgano Superior. ¿Actúas?',
+        question: 'El Administrador revela que los fallos se deben a falta de presupuesto aprobado por el Órgano Superior. ¿Actúas?',
         options: [
-            { text: 'Escalar al Órgano Superior: la responsabilidad es del nivel directivo.', effect: 'escalate', response: 'superior', responseText: 'Entendido. Asumo la responsabilidad. Autorizo un presupuesto extraordinario de 180.000€ para las medidas correctoras urgentes.' },
-            { text: 'Documentar como atenuante: la limitación presupuestaria es un factor a considerar.', effect: 'neutral', response: 'auditor_lider', responseText: 'Queda documentado como factor atenuante. Pero no exime del cumplimiento. Debe quedar reflejado en el acta.' },
-            { text: 'Presionar al CISO: es su responsabilidad trasladar el riesgo al Órgano Superior.', effect: 'pressure', response: 'ciso', responseText: 'Tiene razón. He fallado en comunicar adecuadamente el riesgo. Convocaré una reunión extraordinaria del comité de seguridad esta misma semana.' }
+            { text: 'Escalar al Órgano Superior: la responsabilidad es del nivel directivo.', effect: 'escalate', score: 10, response: 'superior', responseText: 'Asumo la responsabilidad. Autorizo presupuesto extraordinario de 180.000€.', moodChange: { sysadmin: 'aliviado', superior: ' molesto' } },
+            { text: 'Documentar como atenuante: la limitación presupuestaria es un factor.', effect: 'neutral', score: 0, response: 'auditor_lider', responseText: 'Queda documentado como factor atenuante. Pero no exime del cumplimiento.', moodChange: {} },
+            { text: 'Presionar al CISO: es su responsabilidad trasladar el riesgo.', effect: 'pressure', score: 5, response: 'ciso', responseText: 'Tiene razón. He fallado en comunicar el riesgo. Convocaré comité extraordinario.', moodChange: { ciso: 'avergonzado' } }
         ]
     },
     {
-        question: 'Detectas durante la auditoría un incidente de seguridad en curso (indicadores de compromiso activos). ¿Qué haces?',
+        question: 'Detectas durante la auditoría un incidente de seguridad en curso (IoC activos). ¿Qué haces?',
         options: [
-            { text: 'Suspender la auditoría y activar el protocolo de incidentes.', effect: 'suspend', response: 'auditor_lider', responseText: 'Suspendo la auditoría. Prioridad absoluta al incidente. El CCN actúa como CSIRT de referencia. Activen el protocolo RC.inc.1.' },
-            { text: 'Documentar el incidente como hallazgo y continuar la auditoría.', effect: 'continue', response: 'auditor_lider', responseText: 'Documentamos el incidente como hallazgo adicional. Pero la auditoría continúa. Necesitamos ver cómo gestionan la crisis en tiempo real.' },
-            { text: 'Colaborar con el CSIRT interno en la contención.', effect: 'collaborate', response: 'csirt', responseText: 'CSIRT operativo. Aislamos segmentos afectados. Auditor, le mantendremos informado. Necesitamos acceso a los logs del firewall perimetral.' }
+            { text: 'Suspender la auditoría y activar protocolo de incidentes.', effect: 'suspend', score: 15, response: 'auditor_lider', responseText: 'Suspendo la auditoría. Prioridad al incidente. Activen protocolo RC.inc.1.', moodChange: { csirt: 'alerta máxima' } },
+            { text: 'Documentar como hallazgo y continuar la auditoría.', effect: 'continue', score: -5, response: 'auditor_lider', responseText: 'Documentamos el incidente como hallazgo. La auditoría continúa.', moodChange: { ciso: 'estresado' } },
+            { text: 'Colaborar con el CSIRT interno en la contención.', effect: 'collaborate', score: 10, response: 'csirt', responseText: 'CSIRT operativo. Aislamos segmentos afectados. Necesitamos logs del firewall.', moodChange: { csirt: 'colaborando' } }
+        ]
+    },
+    {
+        question: 'El DPO informa de una posible brecha de datos notificable. ¿Cómo gestionas el conflicto de intereses?',
+        options: [
+            { text: 'Notificación inmediata a AEPD: cumplimiento RGPD prioritario.', effect: 'rgpd', score: 10, response: 'dpo', responseText: 'Procedo a notificar a la AEPD en el plazo de 72h. Documentamos todo.', moodChange: { dpo: 'profesional', ciso: 'preocupado' } },
+            { text: 'Esperar a finalizar la auditoría para tener visión completa.', effect: 'wait', score: -15, response: 'auditor_lider', responseText: 'Documentaré esta demora como hallazgo adicional. El RGPD no espera.', moodChange: { dpo: 'frustrado' } },
+            { text: 'Notificar solo si la auditoría confirma la brecha.', effect: 'conditional', score: -5, response: 'auditor_legal', text: 'El RGPD exige notificación si hay riesgo. No podemos condicionar a la auditoría.', moodChange: { dpo: 'tenso' } }
+        ]
+    },
+    {
+        question: 'El proveedor cloud niega el acceso a evidencias alegando confidencialidad. ¿Actúas?',
+        options: [
+            { text: 'Requerir al organismo: es su responsabilidad garantizar el acceso.', effect: 'org_resp', score: 10, response: 'resp_sistema', responseText: 'Tiene razón. Ejerceremos las cláusulas contractuales. El acceso se proporcionará.', moodChange: { provider: 'molesto' } },
+            { text: 'Aceptar la limitación y documentar como alcance restringido.', effect: 'accept', score: -10, response: 'auditor_lider', responseText: 'Documentamos la limitación. Pero esto puede afectar al dictamen final.', moodChange: { provider: 'aliviado' } },
+            { text: 'Escalar a la autoridad de certificación (ENAC).', effect: 'escalate_enac', score: 5, response: 'auditor_lider', responseText: 'Notifico a ENAC. Esta situación requiere intervención regulatoria.', moodChange: { provider: 'alarmado' } }
         ]
     }
 ];
+
+// Comandos de terminal
+const TERMINAL_COMMANDS = {
+    help: () => `Comandos disponibles:
+  help              - Muestra esta ayuda
+  status            - Estado actual de la auditoría
+  actors            - Lista actores presentes
+  findings          - Lista hallazgos detectados
+  controls [family] - Lista controles (MP/OR/OP/CP/PT/RC)
+  evidence [code]   - Muestra evidencia de un hallazgo
+  risk              - Matriz de riesgos actual
+  metrics           - Métricas de madurez
+  scan [target]     - Simula escaneo de vulnerabilidades
+  whois [actor]     - Información de un actor
+  timeline          - Eventos recientes
+  clear             - Limpia la terminal
+  nmap [ip]         - Simula escaneo de red
+  wireshark         - Captura tráfico simulado
+  siem              - Consulta eventos SIEM
+  hash [file]       - Verifica integridad SHA-256`,
+    status: () => {
+        if (!state.running) return '⚠ Auditoría no iniciada';
+        return `ESTADO AUDITORÍA
+━━━━━━━━━━━━━━━━━━
+Organización: ${state.org.name}
+Categoría: ${state.category.toUpperCase()}
+Dificultad: ${state.difficulty}
+Tipo: ${state.type}
+Fase: ${['PRE-AUDITORÍA','PLANIFICACIÓN','EJECUCIÓN','INFORME','SEGUIMIENTO'][state.phase]}
+Hallazgos: ${state.findings.length}
+Evidencias: ${state.evidences.length}
+Incidentes: ${state.incidents}
+Puntuación: ${state.score}
+Tiempo: ${document.getElementById('stat-time').textContent}`;
+    },
+    actors: () => {
+        if (!state.currentActors.length) return 'No hay actores en escena';
+        return state.currentActors.map(a => `• ${a.name} - ${a.role} [${a.mood}]`).join('\n');
+    },
+    findings: () => {
+        if (!state.findings.length) return 'No hay hallazgos detectados aún';
+        return state.findings.map(f => `[${f.severity.toUpperCase()}] ${f.code}: ${f.title}`).join('\n');
+    },
+    controls: (args) => {
+        const fam = (args[0] || '').toUpperCase();
+        const filtered = fam ? ENS_CONTROLS.filter(c => c.family === fam) : ENS_CONTROLS;
+        if (!filtered.length) return `Familia no válida. Usa: MP, OR, OP, CP, PT, RC`;
+        return filtered.map(c => `${c.code.padEnd(12)} [${c.level.toUpperCase().padEnd(5)}] ${c.name}`).join('\n');
+    },
+    evidence: (args) => {
+        const code = args[0];
+        if (!code) return 'Uso: evidence <código_hallazgo>';
+        const f = state.findings.find(x => x.code === code);
+        if (!f) return `Hallazgo ${code} no encontrado`;
+        if (!f.evidence) return 'Sin evidencia asociada';
+        return `EVIDENCIA: ${f.evidence.file}
+━━━━━━━━━━━━━━━━━━
+CONTENIDO:
+${f.evidence.content}
+
+SHA-256: ${f.evidence.hash}`;
+    },
+    risk: () => {
+        if (!state.findings.length) return 'No hay hallazgos para matriz de riesgos';
+        let out = 'MATRIZ DE RIESGOS\n━━━━━━━━━━━━━━━━━━\n';
+        state.findings.forEach(f => {
+            if (f.risk) {
+                const level = f.risk.p * f.risk.i;
+                const cat = level >= 15 ? 'CRÍTICO' : level >= 9 ? 'ALTO' : level >= 4 ? 'MEDIO' : 'BAJO';
+                out += `${f.code.padEnd(12)} P:${f.risk.p} × I:${f.risk.i} = ${level.toString().padEnd(3)} [${cat}]\n`;
+            }
+        });
+        return out;
+    },
+    metrics: () => {
+        return Object.keys(state.metrics).map(f => `${f.padEnd(3)}: ${state.metrics[f].toString().padStart(3)}% ${'█'.repeat(Math.floor(state.metrics[f]/5))}${'░'.repeat(20-Math.floor(state.metrics[f]/5))}`).join('\n');
+    },
+    scan: (args) => {
+        const target = args[0] || 'red_interna';
+        if (!state.running) return '⚠ Inicia la auditoría primero';
+        const vulns = Math.floor(Math.random() * 8) + 3;
+        const crit = Math.floor(Math.random() * 3);
+        const high = Math.floor(Math.random() * 4);
+        const med = Math.floor(Math.random() * 6);
+        return `[*] Iniciando escaneo de vulnerabilidades sobre ${target}
+[*] Usando motor Nessus Professional 10.6
+[*] Plugins: 23.456 (última actualización: 2026-06-13)
+[+] Escaneo completado en 47:23 minutos
+[+] Hosts descubiertos: ${Math.floor(Math.random()*50)+20}
+[!] Vulnerabilidades encontradas: ${vulns}
+    • Críticas (CVSS 9.0-10.0): ${crit}
+    • Altas (CVSS 7.0-8.9): ${high}
+    • Medias (CVSS 4.0-6.9): ${med}
+    • Bajas (CVSS 0.1-3.9): ${Math.floor(Math.random()*10)}
+[+] Informe generado: scan_${target}_${Date.now()}.pdf
+[!] Se recomienda revisar hallazgos críticos inmediatamente`;
+    },
+    nmap: (args) => {
+        const ip = args[0] || '10.20.30.0/24';
+        if (!state.running) return '⚠ Inicia la auditoría primero';
+        const hosts = Math.floor(Math.random() * 15) + 5;
+        return `Starting Nmap 7.94 ( https://nmap.org )
+Scanning ${ip}
+Host discovery: ${hosts} hosts up
+PORT      STATE  SERVICE       VERSION
+22/tcp    open   ssh           OpenSSH 8.9
+80/tcp    open   http          Apache 2.4.57
+443/tcp   open   https         nginx 1.25.3
+3389/tcp  open   ms-wbt-server Microsoft Terminal Services
+8080/tcp  open   http-proxy    Squid 5.7
+${Math.floor(Math.random()*5)+1} servicios no estándar detectados
+OS Detection: Linux 5.x (90%) | Windows Server 2022 (75%)
+Network Distance: 2 hops
+Scan done: ${hosts} IP addresses (${hosts} hosts up) scanned in 124.53 seconds`;
+    },
+    wireshark: () => {
+        if (!state.running) return '⚠ Inicia la auditoría primero';
+        const pkts = Math.floor(Math.random() * 50000) + 10000;
+        return `Capturando en interfaz eth0...
+${pkts} paquetes capturados en 60 segundos
+Protocolos detectados:
+  TCP: ${Math.floor(pkts*0.6)}
+  HTTP: ${Math.floor(pkts*0.15)} ⚠ TRÁFICO NO CIFRADO DETECTADO
+  HTTPS: ${Math.floor(pkts*0.12)}
+  DNS: ${Math.floor(pkts*0.08)}
+  SSH: ${Math.floor(pkts*0.03)}
+  TLS 1.3: ${Math.floor(pkts*0.02)}
+[!] Alerta: 15% del tráfico es HTTP plano
+[!] Posible exposición de datos sensibles
+Captura guardada: capture_${Date.now()}.pcap`;
+    },
+    siem: () => {
+        if (!state.running) return '⚠ Inicia la auditoría primero';
+        const events = Math.floor(Math.random() * 100000) + 50000;
+        const alerts = Math.floor(Math.random() * 50) + 10;
+        return `SIEM Splunk Enterprise 9.1 - Estado
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Eventos procesados (24h): ${events.toLocaleString()}
+Alertas activas: ${alerts}
+  • Críticas: ${Math.floor(Math.random()*5)}
+  • Altas: ${Math.floor(Math.random()*15)}
+  • Medias: ${Math.floor(Math.random()*30)}
+EPS promedio: ${Math.floor(events/86400)}
+Fuentes conectadas: ${Math.floor(Math.random()*30)+20}
+Health: ✅ Operativo
+Última indexación: hace 3 segundos
+[!] ${Math.floor(Math.random()*5)+1} alertas requieren investigación`;
+    },
+    hash: (args) => {
+        const file = args[0] || 'archivo_no_especificado';
+        const hash = Array.from({length: 64}, () => '0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
+        return `Calculando SHA-256 de ${file}...
+${hash}  ${file}
+Verificación: ✅ Íntegro
+Timestamp: ${new Date().toISOString()}`;
+    },
+    whois: (args) => {
+        const id = args[0];
+        if (!id) return 'Uso: whois <id_actor>';
+        const actor = ACTORS_POOL[id] || state.currentActors.find(a => a.id === id);
+        if (!actor) return `Actor ${id} no encontrado. IDs: ${Object.keys(ACTORS_POOL).join(', ')}`;
+        return `${actor.name}
+━━━━━━━━━━━━━━━━━━
+Rol: ${actor.role}
+Personalidad: ${actor.personality}
+Estado actual: ${actor.mood}
+Expertise: ${actor.expertise.join(', ')}`;
+    },
+    timeline: () => {
+        if (!state.timeline.length) return 'No hay eventos en la timeline';
+        return state.timeline.slice(-10).map(e => `[${e.time}] ${e.type.toUpperCase().padEnd(8)} ${e.title}`).join('\n');
+    },
+    clear: () => { document.getElementById('terminal-output').innerHTML = ''; return ''; }
+};
 
 // ============================================================
 // ESTADO GLOBAL
@@ -699,24 +1321,28 @@ let state = {
     org: null,
     category: null,
     difficulty: 'normal',
+    type: 'inicial',
     phase: 0,
     findings: [],
     evidences: [],
     incidents: 0,
-    metrics: { MP: 0, OR: 0, OP: 0, CP: 0, AT: 0, RC: 0 },
+    metrics: { MP: 0, OR: 0, OP: 0, CP: 0, PT: 0, RC: 0 },
     startTime: null,
     timerInterval: null,
     pressureTimer: null,
     pressureSeconds: 0,
     currentActors: [],
-    dialogueQueue: [],
     decisionsTaken: [],
     scenarioFindings: [],
-    heatStatus: {}
+    heatStatus: {},
+    auditedControls: new Set(),
+    score: 0,
+    timeline: [],
+    chatHistory: []
 };
 
 // ============================================================
-// FUNCIONES DE UI
+// UI HELPERS
 // ============================================================
 function log(actorClass, actorName, text, type = '') {
     const now = new Date();
@@ -726,6 +1352,26 @@ function log(actorClass, actorName, text, type = '') {
     div.innerHTML = `<span class="timestamp">[${timeStr}]</span> <span class="actor-name">${actorName}:</span> ${text}`;
     document.getElementById('log-container').appendChild(div);
     document.getElementById('log-container').scrollTop = document.getElementById('log-container').scrollHeight;
+}
+
+function terminalLog(text, type = '') {
+    const div = document.createElement('div');
+    div.className = `terminal-line ${type}`;
+    div.textContent = text;
+    document.getElementById('terminal-output').appendChild(div);
+    document.getElementById('terminal-output').scrollTop = document.getElementById('terminal-output').scrollHeight;
+}
+
+function addTimelineEvent(title, desc, type = 'info') {
+    const now = new Date();
+    const timeStr = now.toTimeString().split(' ')[0];
+    state.timeline.push({ time: timeStr, title, desc, type });
+    const container = document.getElementById('timeline-container');
+    const ev = document.createElement('div');
+    ev.className = `timeline-event ${type}`;
+    ev.innerHTML = `<div class="timeline-time">${timeStr}</div><div class="timeline-title">${title}</div><div class="timeline-desc">${desc}</div>`;
+    container.appendChild(ev);
+    container.scrollTop = container.scrollHeight;
 }
 
 function setPhase(n) {
@@ -738,6 +1384,13 @@ function setPhase(n) {
     }
     const phases = ['PRE-AUDITORÍA', 'PLANIFICACIÓN', 'EJECUCIÓN', 'INFORME', 'SEGUIMIENTO'];
     document.getElementById('hdr-phase').textContent = phases[n] || 'PRE-AUDITORÍA';
+    addTimelineEvent(`FASE: ${phases[n]}`, `Cambio a fase ${n}`, 'info');
+}
+
+function updateScore(delta, reason = '') {
+    state.score += delta;
+    document.getElementById('hdr-score').textContent = state.score;
+    if (reason) addTimelineEvent(`PUNTOS: ${delta > 0 ? '+' : ''}${delta}`, reason, delta > 0 ? 'info' : 'warning');
 }
 
 function updateMetrics() {
@@ -758,11 +1411,10 @@ function updateMetrics() {
 
 function drawRadar() {
     const svg = document.getElementById('radar-svg');
-    const cx = 100, cy = 90, rMax = 70;
-    const families = ['MP', 'OR', 'OP', 'CP', 'AT', 'RC'];
+    const cx = 100, cy = 75, rMax = 55;
+    const families = ['MP', 'OR', 'OP', 'CP', 'PT', 'RC'];
     const n = families.length;
     let html = '';
-    // Grid
     for (let level = 1; level <= 4; level++) {
         const r = (rMax * level) / 4;
         let points = [];
@@ -772,7 +1424,6 @@ function drawRadar() {
         }
         html += `<polygon points="${points.join(' ')}" fill="none" stroke="#0a3a0a" stroke-width="0.5"/>`;
     }
-    // Axes
     for (let i = 0; i < n; i++) {
         const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
         const x = cx + rMax * Math.cos(angle);
@@ -782,7 +1433,6 @@ function drawRadar() {
         const ly = cy + (rMax + 12) * Math.sin(angle);
         html += `<text x="${lx}" y="${ly}" fill="#00f3ff" font-size="8" text-anchor="middle" dominant-baseline="middle">${families[i]}</text>`;
     }
-    // Data
     let dataPoints = [];
     for (let i = 0; i < n; i++) {
         const val = state.metrics[families[i]] / 100;
@@ -790,7 +1440,7 @@ function drawRadar() {
         dataPoints.push(`${cx + rMax * val * Math.cos(angle)},${cy + rMax * val * Math.sin(angle)}`);
     }
     html += `<polygon points="${dataPoints.join(' ')}" fill="rgba(0,255,65,0.2)" stroke="#00ff41" stroke-width="1.5"/>`;
-    dataPoints.forEach((p, i) => {
+    dataPoints.forEach((p) => {
         const [x, y] = p.split(',');
         html += `<circle cx="${x}" cy="${y}" r="2.5" fill="#00ff41"/>`;
     });
@@ -798,15 +1448,161 @@ function drawRadar() {
 }
 
 function buildHeatmap() {
-    const container = document.getElementById('heatmap');
+    // Ya no se usa directamente, pero se mantiene por compatibilidad
+}
+
+function buildChecklist() {
+    const container = document.getElementById('checklist-container');
     container.innerHTML = '';
+    const families = {
+        'MP': { name: 'MEDIDAS DE PROTECCIÓN', controls: [] },
+        'OR': { name: 'MEDIDAS ORGANIZATIVAS', controls: [] },
+        'OP': { name: 'MEDIDAS OPERACIONALES', controls: [] },
+        'CP': { name: 'CONTINUIDAD DEL SERVICIO', controls: [] },
+        'PT': { name: 'PROTECCIÓN', controls: [] },
+        'RC': { name: 'REACCIONES', controls: [] }
+    };
     ENS_CONTROLS.forEach(c => {
-        const cell = document.createElement('div');
-        cell.className = 'heat-cell ' + (state.heatStatus[c.code] || 'na');
-        cell.textContent = c.code.split('.')[1] || c.code.slice(-2);
-        cell.title = `${c.code}: ${c.name}`;
-        container.appendChild(cell);
+        if (families[c.family]) families[c.family].controls.push(c);
     });
+    Object.keys(families).forEach(fam => {
+        const group = document.createElement('div');
+        group.className = 'checklist-group';
+        group.innerHTML = `<div class="checklist-group-title">${fam} - ${families[fam].name} (${families[fam].controls.length})</div>`;
+        families[fam].controls.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'checklist-item';
+            item.id = `check-${c.code}`;
+            item.innerHTML = `
+                <input type="checkbox" onclick="event.stopPropagation();toggleControl('${c.code}', this.checked)">
+                <span class="code">${c.code}</span>
+                <span class="name">${c.name}</span>
+                <span class="level level-${c.level}">${c.level.toUpperCase()}</span>
+            `;
+            item.onclick = () => showControlDetail(c);
+            group.appendChild(item);
+        });
+        container.appendChild(group);
+    });
+}
+
+function toggleControl(code, checked) {
+    if (checked) {
+        state.auditedControls.add(code);
+    } else {
+        state.auditedControls.delete(code);
+    }
+    document.getElementById('stat-controls').textContent = `${state.auditedControls.size}/${ENS_CONTROLS.length}`;
+}
+
+function showControlDetail(control) {
+    const finding = state.findings.find(f => f.control === control.code);
+    const html = `
+        <h2>${control.code}: ${control.name}</h2>
+        <div class="modal-section">
+            <h3>Información del Control</h3>
+            <div class="modal-field"><span class="label">Familia:</span><span class="value">${control.family}</span></div>
+            <div class="modal-field"><span class="label">Nivel mínimo:</span><span class="value ${control.level === 'alta' ? 'critical' : control.level === 'media' ? 'warning' : 'ok'}">${control.level.toUpperCase()}</span></div>
+            <div class="modal-field"><span class="label">Descripción:</span><span class="value">${control.desc}</span></div>
+            <div class="modal-field"><span class="label">Aplicable:</span><span class="value ok">SÍ</span></div>
+        </div>
+        ${finding ? `
+        <div class="modal-section">
+            <h3>Hallazgo Asociado</h3>
+            <div class="modal-field"><span class="label">Código:</span><span class="value critical">${finding.code}</span></div>
+            <div class="modal-field"><span class="label">Severidad:</span><span class="value critical">${finding.severity.toUpperCase()}</span></div>
+            <div class="modal-field"><span class="label">Título:</span><span class="value">${finding.title}</span></div>
+            <div class="modal-field"><span class="label">Descripción:</span><span class="value">${finding.description}</span></div>
+            <div class="modal-field"><span class="label">Remediación:</span><span class="value ok">${finding.remediation}</span></div>
+            ${finding.risk ? `<div class="modal-field"><span class="label">Riesgo:</span><span class="value critical">P:${finding.risk.p} × I:${finding.risk.i} = ${finding.risk.p * finding.risk.i}</span></div>` : ''}
+        </div>
+        ` : `<div class="modal-section"><h3>Estado</h3><div class="modal-field"><span class="label">Resultado:</span><span class="value ok">CONFORME (sin hallazgos)</span></div></div>`}
+    `;
+    showModal(html);
+}
+
+function buildRiskMatrix() {
+    const matrix = document.getElementById('risk-matrix');
+    matrix.innerHTML = '';
+    // Eje Y (Impacto) - de 5 arriba a 1 abajo
+    for (let i = 5; i >= 1; i--) {
+        const label = document.createElement('div');
+        label.className = 'risk-label';
+        label.textContent = i;
+        label.style.gridRow = 6 - i;
+        label.style.gridColumn = 1;
+        matrix.appendChild(label);
+        for (let j = 1; j <= 5; j++) {
+            const cell = document.createElement('div');
+            const level = i * j;
+            let cls = 'low';
+            if (level >= 15) cls = 'critical';
+            else if (level >= 9) cls = 'high';
+            else if (level >= 4) cls = 'medium';
+            cell.className = `risk-cell ${cls}`;
+            cell.style.gridRow = 6 - i;
+            cell.style.gridColumn = j + 1;
+            cell.title = `P:${j} × I:${i} = ${level}`;
+            // Añadir hallazgos
+            state.findings.forEach(f => {
+                if (f.risk && f.risk.p === j && f.risk.i === i) {
+                    const dot = document.createElement('div');
+                    dot.className = 'risk-dot';
+                    dot.title = `${f.code}: ${f.title}`;
+                    dot.onclick = () => showFindingDetail(f);
+                    cell.appendChild(dot);
+                }
+            });
+            matrix.appendChild(cell);
+        }
+    }
+    // Eje X (Probabilidad)
+    for (let j = 1; j <= 5; j++) {
+        const label = document.createElement('div');
+        label.className = 'risk-label';
+        label.textContent = j;
+        label.style.gridColumn = j + 1;
+        label.style.gridRow = 6;
+        matrix.appendChild(label);
+    }
+    // Etiquetas ejes
+    const yAxis = document.createElement('div');
+    yAxis.className = 'risk-axis-y';
+    yAxis.textContent = 'IMPACTO →';
+    yAxis.style.gridColumn = 1;
+    yAxis.style.gridRow = '1 / span 5';
+    matrix.appendChild(yAxis);
+    const xAxis = document.createElement('div');
+    xAxis.className = 'risk-axis-x';
+    xAxis.textContent = 'PROBABILIDAD →';
+    matrix.appendChild(xAxis);
+}
+
+function showFindingDetail(finding) {
+    const control = ENS_CONTROLS.find(c => c.code === finding.control);
+    const html = `
+        <h2>${finding.code}: ${finding.title}</h2>
+        <div class="modal-section">
+            <h3>Información del Hallazgo</h3>
+            <div class="modal-field"><span class="label">Severidad:</span><span class="value critical">${finding.severity.toUpperCase()}</span></div>
+            <div class="modal-field"><span class="label">Control afectado:</span><span class="value">${finding.control} - ${control ? control.name : ''}</span></div>
+            <div class="modal-field"><span class="label">Descripción:</span><span class="value">${finding.description}</span></div>
+            ${finding.risk ? `<div class="modal-field"><span class="label">Riesgo:</span><span class="value critical">Probabilidad: ${finding.risk.p}/5 × Impacto: ${finding.risk.i}/5 = ${finding.risk.p * finding.risk.i}/25</span></div>` : ''}
+        </div>
+        <div class="modal-section">
+            <h3>Remediación Recomendada</h3>
+            <div class="modal-field"><span class="label">Acciones:</span><span class="value ok">${finding.remediation}</span></div>
+        </div>
+        ${finding.evidence ? `
+        <div class="modal-section">
+            <h3>Evidencia</h3>
+            <div class="modal-field"><span class="label">Archivo:</span><span class="value">${finding.evidence.file}</span></div>
+            <div class="modal-field"><span class="label">Contenido:</span><span class="value">${finding.evidence.content}</span></div>
+            <div class="modal-field"><span class="label">SHA-256:</span><span class="value" style="font-size:0.65rem;word-break:break-all;">${finding.evidence.hash}</span></div>
+        </div>
+        ` : ''}
+    `;
+    showModal(html);
 }
 
 function renderActors() {
@@ -816,8 +1612,23 @@ function renderActors() {
         const div = document.createElement('div');
         div.className = 'actor present';
         div.id = `actor-${a.id}`;
-        div.innerHTML = `<span class="actor-name">${a.name}</span><span class="actor-role">${a.role}</span>`;
+        div.innerHTML = `<span class="actor-name">${a.name}</span><span class="actor-role">${a.role}</span><span class="actor-mood">[${a.mood}]</span>`;
+        div.onclick = () => {
+            document.getElementById('chat-target').value = a.id;
+            document.getElementById('chat-input').focus();
+        };
         container.appendChild(div);
+    });
+    document.getElementById('actor-count').textContent = state.currentActors.length;
+    // Actualizar selector de chat
+    const sel = document.getElementById('chat-target');
+    sel.innerHTML = '';
+    state.currentActors.forEach(a => {
+        if (a.id.startsWith('auditor')) return;
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.name.split(' ')[0];
+        sel.appendChild(opt);
     });
 }
 
@@ -825,19 +1636,41 @@ function highlightActor(actorId, type = 'speaking') {
     document.querySelectorAll('.actor').forEach(a => a.classList.remove('speaking', 'hostile'));
     const el = document.getElementById(`actor-${actorId}`);
     if (el) el.classList.add(type);
+    setTimeout(() => { if (el) el.classList.remove(type); }, 3000);
+}
+
+function updateActorMood(actorId, mood) {
+    const actor = state.currentActors.find(a => a.id === actorId);
+    if (actor) {
+        actor.mood = mood;
+        const el = document.getElementById(`actor-${actorId}`);
+        if (el) {
+            const moodSpan = el.querySelector('.actor-mood');
+            if (moodSpan) moodSpan.textContent = `[${mood}]`;
+        }
+    }
 }
 
 function addFinding(finding) {
+    if (state.findings.find(f => f.code === finding.code)) return;
     state.findings.push(finding);
     document.getElementById('stat-findings').textContent = state.findings.length;
+    document.getElementById('finding-count').textContent = state.findings.length;
     const list = document.getElementById('findings-list');
     const div = document.createElement('div');
     div.className = `finding-item ${finding.severity}`;
-    div.innerHTML = `<span class="finding-title">${finding.code}: ${finding.title}</span><span class="finding-control">Control: ${finding.control}</span><div style="margin-top:4px;font-size:0.7rem;">${finding.description}</div>`;
+    div.innerHTML = `<span class="finding-title">${finding.code}: ${finding.title}</span><span class="finding-control">Control: ${finding.control} | P:${finding.risk?.p || '?'} × I:${finding.risk?.i || '?'}</span>`;
+    div.onclick = () => showFindingDetail(finding);
     list.appendChild(div);
-    // Update heatmap
-    state.heatStatus[finding.control] = finding.severity === 'major' ? 'fail' : finding.severity === 'minor' ? 'warn' : finding.severity === 'strength' ? 'ok' : 'warn';
-    buildHeatmap();
+    // Update checklist
+    const checkItem = document.getElementById(`check-${finding.control}`);
+    if (checkItem) {
+        checkItem.classList.remove('audited', 'nc-major', 'nc-minor', 'obs', 'ok');
+        if (finding.severity === 'major') checkItem.classList.add('nc-major');
+        else if (finding.severity === 'minor') checkItem.classList.add('nc-minor');
+        else if (finding.severity === 'observation') checkItem.classList.add('obs');
+        else if (finding.severity === 'strength') checkItem.classList.add('ok');
+    }
     // Update metrics
     const fam = finding.control.split('.')[0];
     if (state.metrics.hasOwnProperty(fam)) {
@@ -846,6 +1679,10 @@ function addFinding(finding) {
         state.metrics[fam] = Math.max(0, Math.min(100, state.metrics[fam] + penalty + bonus));
         updateMetrics();
     }
+    // Update risk matrix
+    buildRiskMatrix();
+    // Timeline
+    addTimelineEvent(`HALLAZGO: ${finding.code}`, finding.title, finding.severity === 'major' ? 'critical' : finding.severity === 'minor' ? 'warning' : 'info');
 }
 
 function showEvidence(ev) {
@@ -853,8 +1690,9 @@ function showEvidence(ev) {
     document.getElementById('stat-evidence').textContent = state.evidences.length;
     const box = document.getElementById('evidence-box');
     box.style.display = 'block';
-    document.getElementById('evidence-text').innerHTML = `<strong>Archivo:</strong> ${ev.file}<br><strong>Contenido:</strong> ${ev.content}`;
-    document.getElementById('evidence-hash').textContent = `SHA-256: ${ev.hash}`;
+    document.getElementById('ev-file').textContent = ev.file;
+    document.getElementById('ev-content').textContent = ev.content;
+    document.getElementById('ev-hash').textContent = `SHA-256: ${ev.hash}`;
 }
 
 function showDecision(decision) {
@@ -874,16 +1712,251 @@ function showDecision(decision) {
 
 function takeDecision(decision, idx) {
     const opt = decision.options[idx];
-    state.decisionsTaken.push({ decision: decision.question, choice: opt.text, effect: opt.effect });
+    state.decisionsTaken.push({ decision: decision.question, choice: opt.text, effect: opt.effect, score: opt.score });
     document.getElementById('decision-box').style.display = 'none';
     log('decision', 'AUDITOR (TÚ)', opt.text, 'decision');
+    updateScore(opt.score, opt.text.substring(0, 50));
     setTimeout(() => {
         const actor = ACTORS_POOL[opt.response];
         if (actor) {
             highlightActor(opt.response, opt.effect === 'hostile' ? 'hostile' : 'speaking');
             log(actor.class, actor.name, opt.responseText);
+            addTimelineEvent(`DECISIÓN: ${opt.effect.toUpperCase()}`, opt.text.substring(0, 60), 'info');
+        }
+        if (opt.moodChange) {
+            Object.keys(opt.moodChange).forEach(actorId => {
+                updateActorMood(actorId, opt.moodChange[actorId]);
+            });
         }
     }, 1500);
+}
+
+function showModal(html) {
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// ============================================================
+// CHAT INTERACTIVO
+// ============================================================
+const CHAT_RESPONSES = {
+    auditor_lider: {
+        greetings: ['Buenos días. ¿En qué puedo ayudarle con la auditoría?', 'Adelante. Estoy revisando la documentación.'],
+        findings: ['Los hallazgos se documentan según CCN-STIC-800. Cada uno tiene su código, severidad y evidencia.', 'Las No Conformidades Mayores son bloqueantes para la certificación. Las Menores permiten certificación condicional.'],
+        process: ['Seguimos el protocolo de auditoría ENAC. Planificación, ejecución, informe y seguimiento.', 'El dictamen final puede ser: Conforme, Conforme con observaciones, No conforme.'],
+        default: ['Interesante pregunta. Déjeme consultarlo con el equipo.', 'Eso requiere análisis adicional. Lo documentaré.']
+    },
+    auditor_tec: {
+        greetings: ['Hola. Estoy ejecutando pruebas técnicas.', 'Listo para realizar cualquier prueba que necesites.'],
+        findings: ['He detectado varias anomalías. Las estoy clasificando por severidad.', 'Las vulnerabilidades críticas requieren acción inmediata.'],
+        technical: ['Uso Nessus, OpenVAS, Burp Suite, Wireshark. Todo documentado.', 'El análisis de vulnerabilidades sigue metodología OWASP y CIS.'],
+        default: ['Necesito ejecutar más pruebas para confirmarlo.', 'Puedo hacer un escaneo adicional si es necesario.']
+    },
+    auditor_legal: {
+        greetings: ['Buenos días. Reviso el marco legal.', 'Estoy analizando la documentación contractual.'],
+        rgpd: ['El RGPD y el ENS son complementarios. Una brecha puede ser notificable a ambas autoridades.', 'La AEPD y el CCN tienen protocolos de coordinación.'],
+        contracts: ['Los contratos deben incluir cláusulas de seguridad específicas del ENS.', 'El derecho de auditoría debe estar explícito en todos los contratos con proveedores.'],
+        default: ['Es una cuestión que requiere análisis jurídico detallado.', 'Lo consultaré con el departamento legal.']
+    },
+    ciso: {
+        greetings: ['Hola. Estoy a su disposición para la auditoría.', 'Tengo toda la documentación preparada.'],
+        defensive: ['Ese hallazgo tiene contexto que debo explicar.', 'Las limitaciones presupuestarias han afectado nuestra capacidad de implementación.'],
+        cooperative: ['Asumo el hallazgo. Propondremos un plan de remediación.', 'Trabajaremos en la corrección en el plazo indicado.'],
+        default: ['Déjeme consultar con mi equipo y le respondo.', 'Esa información requiere autorización del Órgano Superior.']
+    },
+    sysadmin: {
+        greetings: ['Hola. Estoy un poco liado con los sistemas.', 'A ver en qué puedo ayudarte.'],
+        technical: ['Los servidores legacy son un problema constante. No hay soporte.', 'El presupuesto de seguridad siempre se queda corto.'],
+        stressed: ['No doy abasto con tantos sistemas y tan poco personal.', 'Llevo meses pidiendo refuerzos pero no llegan.'],
+        default: ['Tendría que mirarlo con calma.', 'Eso no lo sé, habría que preguntar al fabricante.']
+    },
+    dpo: {
+        greetings: ['Buenos días. Como DPO, velaré por el cumplimiento RGPD.', 'Estoy revisando los tratamientos de datos.'],
+        rgpd: ['Cualquier brecha con riesgo debe notificarse en 72 horas a la AEPD.', 'Las evaluaciones de impacto son obligatorias para tratamientos de alto riesgo.'],
+        default: ['Eso requiere una evaluación de impacto detallada.', 'Lo consultaré con la AEPD si es necesario.']
+    },
+    superior: {
+        greetings: ['Buenos días. Espero que la auditoría sea breve.', 'Tengo una reunión en 30 minutos.'],
+        budget: ['Los presupuestos son limitados. Hay que priorizar.', 'La seguridad es importante pero hay otras necesidades.'],
+        responsible: ['Asumo la responsabilidad final del sistema.', 'Tomaré las decisiones necesarias para cumplir.'],
+        default: ['Eso debe verlo el CISO.', 'Presentenme un informe ejecutivo.']
+    },
+    rrhh: {
+        greetings: ['Hola. No sé mucho de seguridad informática.', '¿En qué puedo ayudar?'],
+        unaware: ['La formación en seguridad se imparte pero no sé si es eficaz.', 'Los controles de antecedentes se hacen, creo.'],
+        default: ['Tendría que consultarlo con el departamento jurídico.', 'No estoy segura de ese procedimiento.']
+    },
+    provider: {
+        greetings: ['Buenos días. Represento a CloudGov S.L.', 'Estamos certificados ENS nivel alto.'],
+        defensive: ['Nuestra plataforma cumple con todos los estándares.', 'Esa información es confidencial y no podemos proporcionarla.'],
+        cooperative: ['Colaboraremos en lo que sea necesario dentro del contrato.', 'Podemos proporcionar los informes de auditoría propios.'],
+        default: ['Eso requiere autorización de nuestro departamento legal.', 'Consultaré con nuestro equipo de cumplimiento.']
+    },
+    csirt: {
+        greetings: ['CCN-CERT operativo. ¿Reportan un incidente?', 'Estamos monitorizando amenazas activas.'],
+        incident: ['Hemos detectado IoCs compatibles con APT.', 'Recomendamos aislamiento inmediato del segmento afectado.'],
+        default: ['Necesitamos más indicadores para confirmar.', 'Mantengan la evidencia intacta para análisis forense.']
+    }
+};
+
+function sendChat() {
+    const input = document.getElementById('chat-input');
+    const target = document.getElementById('chat-target').value;
+    const msg = input.value.trim();
+    if (!msg || !target) return;
+    if (!state.running) {
+        alert('Inicia la auditoría primero');
+        return;
+    }
+    const container = document.getElementById('chat-messages');
+    const youMsg = document.createElement('div');
+    youMsg.className = 'chat-msg you';
+    youMsg.innerHTML = `<div class="who">TÚ (Auditor)</div><div>${msg}</div>`;
+    container.appendChild(youMsg);
+    input.value = '';
+    state.chatHistory.push({ from: 'you', to: target, msg });
+    // Respuesta del actor
+    setTimeout(() => {
+        const actor = ACTORS_POOL[target];
+        if (!actor) return;
+        highlightActor(target, 'speaking');
+        const responses = CHAT_RESPONSES[target] || CHAT_RESPONSES.ciso;
+        let category = 'default';
+        const lowerMsg = msg.toLowerCase();
+        if (lowerMsg.includes('hola') || lowerMsg.includes('buenos')) category = 'greetings';
+        else if (lowerMsg.includes('hallazgo') || lowerMsg.includes('vulnerabilidad') || lowerMsg.includes('nc')) category = 'findings';
+        else if (lowerMsg.includes('rgpd') || lowerMsg.includes('brecha') || lowerMsg.includes('aepd')) category = 'rgpd';
+        else if (lowerMsg.includes('contrato') || lowerMsg.includes('proveedor')) category = 'contracts';
+        else if (lowerMsg.includes('presupuesto') || lowerMsg.includes('dinero')) category = 'budget';
+        else if (lowerMsg.includes('técnico') || lowerMsg.includes('escaneo') || lowerMsg.includes('herramienta')) category = 'technical';
+        else if (lowerMsg.includes('incidente') || lowerMsg.includes('ioc')) category = 'incident';
+        else if (lowerMsg.includes('proceso') || lowerMsg.includes('auditoría')) category = 'process';
+        const pool = responses[category] || responses.default;
+        const response = pool[Math.floor(Math.random() * pool.length)];
+        const actorMsg = document.createElement('div');
+        actorMsg.className = 'chat-msg';
+        actorMsg.innerHTML = `<div class="who">${actor.name}</div><div>${response}</div>`;
+        container.appendChild(actorMsg);
+        container.scrollTop = container.scrollHeight;
+        state.chatHistory.push({ from: target, to: 'you', msg: response });
+        log(actor.class, actor.name, `[CHAT] ${response}`);
+        updateScore(1, `Chat con ${actor.name}`);
+    }, 1000 + Math.random() * 1500);
+    container.scrollTop = container.scrollHeight;
+}
+
+// ============================================================
+// TERMINAL
+// ============================================================
+function executeCommand() {
+    const input = document.getElementById('terminal-input');
+    const cmd = input.value.trim();
+    if (!cmd) return;
+    terminalLog(`auditor@ccn:~$ ${cmd}`, 'cmd');
+    input.value = '';
+    const parts = cmd.split(/\s+/);
+    const command = parts[0].toLowerCase();
+    const args = parts.slice(1);
+    if (TERMINAL_COMMANDS[command]) {
+        const result = TERMINAL_COMMANDS[command](args);
+        if (result) terminalLog(result);
+    } else {
+        terminalLog(`Comando no reconocido: ${command}. Escribe 'help' para ver comandos disponibles.`, 'err');
+    }
+}
+
+// ============================================================
+// NETWORK MAP
+// ============================================================
+function buildNetworkMap() {
+    const container = document.getElementById('network-container');
+    container.innerHTML = '';
+    const nodes = [
+        { id: 'internet', label: 'INTERNET', x: 50, y: 20, type: 'external' },
+        { id: 'fw', label: 'FIREWALL', x: 50, y: 100, type: 'secure' },
+        { id: 'dmz', label: 'DMZ', x: 25, y: 180, type: 'secure' },
+        { id: 'web', label: 'WEB SERVERS', x: 75, y: 180, type: 'secure' },
+        { id: 'app', label: 'APP SERVERS', x: 25, y: 280, type: 'secure' },
+        { id: 'db', label: 'DATABASES', x: 75, y: 280, type: 'secure' },
+        { id: 'ad', label: 'ACTIVE DIRECTORY', x: 50, y: 380, type: 'secure' },
+        { id: 'siem', label: 'SIEM', x: 20, y: 380, type: 'secure' },
+        { id: 'backup', label: 'BACKUP', x: 80, y: 380, type: 'secure' }
+    ];
+    // Marcar algunos como comprometidos según hallazgos
+    if (state.findings.find(f => f.code === 'NC-M-001')) {
+        const appNode = nodes.find(n => n.id === 'app');
+        const dbNode = nodes.find(n => n.id === 'db');
+        if (appNode) appNode.type = 'compromised';
+        if (dbNode) dbNode.type = 'compromised';
+    }
+    if (state.findings.find(f => f.code === 'NC-M-002')) {
+        const webNode = nodes.find(n => n.id === 'web');
+        if (webNode) webNode.type = 'compromised';
+    }
+    const links = [
+        { from: 'internet', to: 'fw', type: 'encrypted' },
+        { from: 'fw', to: 'dmz', type: 'encrypted' },
+        { from: 'fw', to: 'web', type: 'encrypted' },
+        { from: 'dmz', to: 'app', type: 'insecure' },
+        { from: 'web', to: 'app', type: 'insecure' },
+        { from: 'app', to: 'db', type: 'insecure' },
+        { from: 'app', to: 'ad', type: 'encrypted' },
+        { from: 'ad', to: 'siem', type: 'encrypted' },
+        { from: 'app', to: 'backup', type: 'encrypted' }
+    ];
+    // Dibujar enlaces
+    links.forEach(link => {
+        const from = nodes.find(n => n.id === link.from);
+        const to = nodes.find(n => n.id === link.to);
+        if (!from || !to) return;
+        const line = document.createElement('div');
+        line.className = `network-link ${link.type}`;
+        const x1 = from.x, y1 = from.y + 15;
+        const x2 = to.x, y2 = to.y + 15;
+        const length = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+        const angle = Math.atan2(y2-y1, x2-x1) * 180 / Math.PI;
+        line.style.width = length + '%';
+        line.style.left = x1 + '%';
+        line.style.top = y1 + '%';
+        line.style.transform = `rotate(${angle}deg)`;
+        container.appendChild(line);
+    });
+    // Dibujar nodos
+    nodes.forEach(node => {
+        const div = document.createElement('div');
+        div.className = `network-node ${node.type}`;
+        div.textContent = node.label;
+        div.style.left = node.x + '%';
+        div.style.top = node.y + '%';
+        div.style.transform = 'translate(-50%, -50%)';
+        div.onclick = () => {
+            showModal(`
+                <h2>${node.label}</h2>
+                <div class="modal-section">
+                    <h3>Información del Nodo</h3>
+                    <div class="modal-field"><span class="label">Tipo:</span><span class="value ${node.type === 'compromised' ? 'critical' : node.type === 'secure' ? 'ok' : ''}">${node.type.toUpperCase()}</span></div>
+                    <div class="modal-field"><span class="label">Estado:</span><span class="value ${node.type === 'compromised' ? 'critical' : 'ok'}">${node.type === 'compromised' ? 'COMPROMETIDO' : 'OPERATIVO'}</span></div>
+                </div>
+            `);
+        };
+        container.appendChild(div);
+    });
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tabName) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    if (tabName === 'risk') buildRiskMatrix();
+    if (tabName === 'network') buildNetworkMap();
 }
 
 // ============================================================
@@ -900,52 +1973,53 @@ function pickN(arr, n) {
 }
 
 function generateScenario() {
-    // Org
     let orgKey = document.getElementById('sel-org').value;
     if (orgKey === 'aleatoria') orgKey = pickRandom(Object.keys(ORGS));
     state.org = ORGS[orgKey];
     
-    // Cat
     let cat = document.getElementById('sel-cat').value;
-    if (cat === 'aleatoria') cat = pickRandom(['bajo', 'medio', 'alto']);
+    if (cat === 'aleatoria') cat = state.org.cat;
     state.category = cat;
     
-    // Difficulty
     state.difficulty = document.getElementById('sel-diff').value;
+    state.type = document.getElementById('sel-type').value;
     
-    // Update header
-    document.getElementById('hdr-org').textContent = state.org.name.length > 35 ? state.org.name.slice(0,35)+'...' : state.org.name;
+    document.getElementById('hdr-org').textContent = state.org.name.length > 30 ? state.org.name.slice(0,30)+'...' : state.org.name;
     document.getElementById('hdr-cat').textContent = cat.toUpperCase();
     
-    // Actors based on scenario
-    let actors = ['auditor_lider', 'auditor_tec', 'ciso'];
+    // Actors
+    let actors = ['auditor_lider', 'auditor_tec', 'auditor_legal', 'ciso'];
     if (cat === 'alto' || cat === 'medio') actors.push('sysadmin');
-    if (state.org.sector === 'Sanidad' || state.org.sector === 'AGE') actors.push('dpo');
-    if (cat === 'alto' && Math.random() > 0.5) actors.push('superior');
-    if (state.difficulty === 'caos') actors.push('csirt');
-    if (Math.random() > 0.6) actors.push('rrhh');
+    if (['Sanidad', 'AGE', 'SSocial', 'Justicia'].includes(state.org.sector)) actors.push('dpo');
+    if (cat === 'alto') actors.push('resp_sistema', 'superior');
+    if (state.difficulty === 'caos' || state.difficulty === 'forensic') actors.push('csirt');
+    if (Math.random() > 0.5) actors.push('rrhh');
+    if (Math.random() > 0.6) actors.push('provider');
+    if (Math.random() > 0.7 && state.ciso_personality !== 'cooperative') actors.push('ciso_tech');
     
-    state.currentActors = actors.map(id => ACTORS_POOL[id]);
+    state.currentActors = actors.map(id => ({...ACTORS_POOL[id]}));
     
-    // Findings: 3-5 depending on difficulty
-    let numFindings = state.difficulty === 'caos' ? 5 : state.difficulty === 'hostil' ? 4 : 3;
+    // Findings
+    let numFindings = state.difficulty === 'caos' ? 6 : state.difficulty === 'forensic' ? 5 : state.difficulty === 'hostil' ? 4 : 3;
     state.scenarioFindings = pickN(FINDINGS_DB, numFindings);
     
-    // Initial metrics based on category (higher category = more scrutiny)
-    const base = cat === 'alto' ? 65 : cat === 'medio' ? 75 : 85;
+    // Initial metrics
+    const base = cat === 'alto' ? 60 : cat === 'medio' ? 72 : 82;
     state.metrics = {
         MP: base + Math.floor(Math.random() * 15),
         OR: base + Math.floor(Math.random() * 15),
         OP: base - 5 + Math.floor(Math.random() * 15),
         CP: base - 10 + Math.floor(Math.random() * 15),
-        AT: base + Math.floor(Math.random() * 15),
+        PT: base + Math.floor(Math.random() * 15),
         RC: base + Math.floor(Math.random() * 15)
     };
     Object.keys(state.metrics).forEach(k => state.metrics[k] = Math.min(100, state.metrics[k]));
     
     renderActors();
-    buildHeatmap();
+    buildChecklist();
+    buildRiskMatrix();
     updateMetrics();
+    document.getElementById('stat-controls').textContent = `0/${ENS_CONTROLS.length}`;
 }
 
 // ============================================================
@@ -984,13 +2058,22 @@ function startAudit() {
     state.incidents = 0;
     state.decisionsTaken = [];
     state.heatStatus = {};
+    state.auditedControls = new Set();
+    state.score = 0;
+    state.timeline = [];
+    state.chatHistory = [];
     document.getElementById('findings-list').innerHTML = '';
     document.getElementById('log-container').innerHTML = '';
+    document.getElementById('terminal-output').innerHTML = '';
+    document.getElementById('timeline-container').innerHTML = '<div class="timeline-line"></div>';
+    document.getElementById('chat-messages').innerHTML = '';
     document.getElementById('evidence-box').style.display = 'none';
     document.getElementById('decision-box').style.display = 'none';
     document.getElementById('stat-findings').textContent = '0';
     document.getElementById('stat-evidence').textContent = '0';
     document.getElementById('stat-incidents').textContent = '0';
+    document.getElementById('finding-count').textContent = '0';
+    document.getElementById('hdr-score').textContent = '0';
     
     generateScenario();
     
@@ -1003,12 +2086,22 @@ function startAudit() {
     
     startTimer();
     
+    terminalLog('╔══════════════════════════════════════════════╗', 'info');
+    terminalLog('║  ENS AUDIT COMMAND CENTER v3.0              ║', 'info');
+    terminalLog('║  CCN-STIC-800 Protocol Active               ║', 'info');
+    terminalLog('╚══════════════════════════════════════════════╝', 'info');
+    terminalLog('');
+    terminalLog('Escribe "help" para ver comandos disponibles.', 'info');
+    terminalLog('');
+    
     let t = 0;
     
     // FASE 1: PLANIFICACIÓN
     schedule(() => {
         setPhase(1);
-        log('system', 'SISTEMA', `Iniciando auditoría ENS en ${state.org.name}. Categoría: ${state.category.toUpperCase()}. Dificultad: ${state.difficulty}.`);
+        log('system', 'SISTEMA', `Iniciando auditoría ENS en ${state.org.name}. Categoría: ${state.category.toUpperCase()}. Dificultad: ${state.difficulty}. Tipo: ${state.type}.`);
+        addTimelineEvent('INICIO AUDITORÍA', `${state.org.name} - ${state.category.toUpperCase()}`, 'info');
+        updateScore(5, 'Inicio de auditoría');
     }, t += 800);
     
     schedule(() => {
@@ -1017,12 +2110,17 @@ function startAudit() {
     }, t += 2500);
     
     schedule(() => {
-        log('auditor_tec', ACTORS_POOL.auditor_tec.name, `Complementando: aplicaremos los criterios de la guía CCN-STIC-800. Revisaremos las 6 familias de medidas: protección, organización, operación, continuidad, control de accesos y reacciones. Solicitamos acceso al Statement of Applicability y al último análisis de riesgos.`);
+        log('auditor_tec', ACTORS_POOL.auditor_tec.name, `Aplicaremos criterios CCN-STIC-800. Revisaremos las 6 familias: MP, OR, OP, CP, PT, RC. Solicitamos acceso al SoA y análisis de riesgos.`);
         highlightActor('auditor_tec');
     }, t += 4500);
     
     schedule(() => {
-        log('ciso', ACTORS_POOL.ciso.name, `Bienvenida al equipo. La documentación está disponible en el data room. Tenemos 47 controles aplicables de los 50 del esquema. Les hemos preparado un índice por familias.`);
+        log('auditor_legal', ACTORS_POOL.auditor_legal.name, `Revisaremos también el cumplimiento RGPD/LOPDGDD y los contratos con proveedores. Solicitamos acceso al data room.`);
+        highlightActor('auditor_legal');
+    }, t += 3500);
+    
+    schedule(() => {
+        log('ciso', ACTORS_POOL.ciso.name, `Bienvenida. La documentación está disponible. Tenemos ${ENS_CONTROLS.filter(c => c.level === state.category || (state.category === 'alto') || (state.category === 'medio' && c.level === 'baja') || c.level === 'baja').length} controles aplicables.`);
         highlightActor('ciso');
     }, t += 3500);
     
@@ -1030,16 +2128,16 @@ function startAudit() {
     schedule(() => {
         setPhase(2);
         log('system', 'SISTEMA', 'FASE DE EJECUCIÓN: Inicio de pruebas técnicas y entrevistas.');
+        addTimelineEvent('FASE EJECUCIÓN', 'Pruebas técnicas e interviews', 'info');
     }, t += 3000);
     
-    // Primer hallazgo
     let findingDelay = t + 4000;
     state.scenarioFindings.forEach((finding, idx) => {
         finding.dialogues.forEach((d, i) => {
             schedule(() => {
                 const actor = ACTORS_POOL[d.actor];
                 if (actor) {
-                    highlightActor(d.actor, d.actor.startsWith('auditor') ? 'speaking' : 'speaking');
+                    highlightActor(d.actor, 'speaking');
                     log(actor.class, actor.name, d.text);
                 }
             }, findingDelay += 3500);
@@ -1048,58 +2146,64 @@ function startAudit() {
         schedule(() => {
             log('finding', 'HALLAZGO', `${finding.code} - ${finding.title} [${finding.severity.toUpperCase()}]`, 'finding');
             addFinding(finding);
+            updateScore(finding.severity === 'major' ? 15 : finding.severity === 'minor' ? 8 : finding.severity === 'observation' ? 3 : 5, `Hallazgo ${finding.code}`);
         }, findingDelay += 1500);
         
         schedule(() => {
             showEvidence(finding.evidence);
-            log('system', 'EVIDENCIA', `Adjuntada evidencia: ${finding.evidence.file}`);
+            log('system', 'EVIDENCIA', `Adjuntada: ${finding.evidence.file}`);
         }, findingDelay += 1500);
         
         findingDelay += 2500;
     });
     
-    // Decisión interactiva
-    schedule(() => {
-        const decision = pickRandom(DECISIONS);
-        showDecision(decision);
-        log('system', 'SISTEMA', 'Se requiere una decisión operativa del auditor.');
-    }, findingDelay += 2000);
+    // Decisiones interactivas
+    let decisionDelay = findingDelay + 3000;
+    pickN(DECISIONS, 2).forEach((decision, idx) => {
+        schedule(() => {
+            showDecision(decision);
+            log('system', 'SISTEMA', `Decisión operativa requerida (${idx+1}/2).`);
+        }, decisionDelay += 15000);
+        decisionDelay += 8000;
+    });
     
-    // Incidente si dificultad caos
-    if (state.difficulty === 'caos') {
+    // Incidente si dificultad caos/forensic
+    if (state.difficulty === 'caos' || state.difficulty === 'forensic') {
         schedule(() => {
             state.incidents++;
             document.getElementById('stat-incidents').textContent = state.incidents;
-            log('system', 'ALERTA', '🚨 DETECTADO INDICADOR DE COMPROMISO: Tráfico C2 hacia IP externa 185.220.101.X. Posible beaconing de malware.');
+            log('system', 'ALERTA', '🚨 INDICADOR DE COMPROMISO: Tráfico C2 hacia IP externa 185.220.101.X. Beaconing de malware.');
             highlightActor('csirt', 'hostile');
-        }, findingDelay += 8000);
+            addTimelineEvent('INCIDENTE DETECTADO', 'IoC activos - Tráfico C2', 'critical');
+        }, decisionDelay += 8000);
         
         schedule(() => {
-            log('csirt', ACTORS_POOL.csirt.name, 'Confirmado. Aislamos el endpoint afectado. Iniciamos procedimiento de contención. Esto es un incidente nivel 3 según nuestro SLA.');
-        }, findingDelay += 11000);
+            log('csirt', ACTORS_POOL.csirt.name, 'Confirmado. Aislamos endpoint afectado. Iniciamos contención. Incidente nivel 3.');
+        }, decisionDelay += 11000);
         
         schedule(() => {
-            log('auditor_lider', ACTORS_POOL.auditor_lider.name, 'Esto cambia el alcance. Documentamos el incidente como hallazgo adicional. La auditoría continúa en modo paralelo.');
-        }, findingDelay += 14000);
+            log('auditor_lider', ACTORS_POOL.auditor_lider.name, 'Documentamos el incidente como hallazgo adicional. La auditoría continúa en modo paralelo.');
+            updateScore(10, 'Gestión de incidente');
+        }, decisionDelay += 14000);
     }
     
-    // FASE 3: INFORME PRELIMINAR
+    // FASE 3: INFORME
     schedule(() => {
         setPhase(3);
         log('system', 'SISTEMA', 'FASE DE INFORME: Consolidación de hallazgos.');
         document.getElementById('btn-final').disabled = false;
-    }, findingDelay += 15000);
+    }, decisionDelay += 15000);
     
     schedule(() => {
-        log('auditor_lider', ACTORS_POOL.auditor_lider.name, `Cerramos la fase de ejecución. Resumen preliminar: ${state.findings.filter(f=>f.severity==='major').length} No Conformidades Mayores, ${state.findings.filter(f=>f.severity==='minor').length} Menores, ${state.findings.filter(f=>f.severity==='observation').length} Observaciones, ${state.findings.filter(f=>f.severity==='strength').length} Fortalezas.`);
+        log('auditor_lider', ACTORS_POOL.auditor_lider.name, `Cerramos ejecución. Resumen: ${state.findings.filter(f=>f.severity==='major').length} NC Mayores, ${state.findings.filter(f=>f.severity==='minor').length} Menores, ${state.findings.filter(f=>f.severity==='observation').length} Observaciones, ${state.findings.filter(f=>f.severity==='strength').length} Fortalezas.`);
         highlightActor('auditor_lider');
-    }, findingDelay += 17000);
+    }, decisionDelay += 17000);
     
-    // FASE 4: SEGUIMIENTO (simulada)
+    // FASE 4
     schedule(() => {
         setPhase(4);
-        log('system', 'SISTEMA', 'FASE DE SEGUIMIENTO: El PAC deberá presentarse en un plazo máximo de 3 meses.');
-    }, findingDelay += 20000);
+        log('system', 'SISTEMA', 'FASE DE SEGUIMIENTO: PAC en plazo máximo de 3 meses.');
+    }, decisionDelay += 20000);
 }
 
 function restartAudit() {
@@ -1119,6 +2223,7 @@ function restartAudit() {
     document.getElementById('hdr-cat').textContent = '---';
     document.getElementById('hdr-phase').textContent = 'PRE-AUDITORÍA';
     document.getElementById('hdr-compliance').textContent = '--%';
+    document.getElementById('hdr-score').textContent = '0';
     document.getElementById('stat-time').textContent = '00:00';
     log('system', 'SISTEMA', 'Sistema reiniciado. Listo para nuevo escenario.');
 }
@@ -1127,8 +2232,9 @@ function applyPressure() {
     if (!state.running) return;
     state.pressureSeconds = 120;
     document.getElementById('pressure-timer').classList.add('active');
-    log('auditor_lider', ACTORS_POOL.auditor_lider.name, 'PRESIÓN OPERATIVA ACTIVADA: Reduzco el plazo de respuesta a 2 horas. La falta de evidencia se interpretará como negligencia. Ejecuten.');
+    log('auditor_lider', ACTORS_POOL.auditor_lider.name, 'PRESIÓN OPERATIVA ACTIVADA: Plazo de respuesta 2 horas. La falta de evidencia se interpretará como negligencia.');
     highlightActor('auditor_lider', 'hostile');
+    addTimelineEvent('PRESIÓN ACTIVADA', 'Plazo 2h para evidencias', 'warning');
     
     state.pressureTimer = setInterval(() => {
         state.pressureSeconds--;
@@ -1138,9 +2244,10 @@ function applyPressure() {
         if (state.pressureSeconds <= 0) {
             clearInterval(state.pressureTimer);
             document.getElementById('pressure-timer').classList.remove('active');
-            log('system', 'SISTEMA', '⏰ PLAZO CUMPLIDO. Documentando incumplimiento de plazos como hallazgo adicional.');
+            log('system', 'SISTEMA', '⏰ PLAZO CUMPLIDO. Documentando incumplimiento.');
             state.incidents++;
             document.getElementById('stat-incidents').textContent = state.incidents;
+            updateScore(-20, 'Plazo incumplido');
         }
     }, 1000);
 }
@@ -1148,43 +2255,49 @@ function applyPressure() {
 function requestEvidence() {
     if (!state.running) return;
     const control = pickRandom(ENS_CONTROLS);
-    log('auditor_tec', ACTORS_POOL.auditor_tec.name, `Solicito evidencia específica del control ${control.code}: "${control.name}". Plazo: 30 minutos.`);
+    log('auditor_tec', ACTORS_POOL.auditor_tec.name, `Solicito evidencia del control ${control.code}: "${control.name}". Plazo: 30 minutos.`);
     highlightActor('auditor_tec');
+    addTimelineEvent(`EVIDENCIA SOLICITADA`, control.code, 'info');
     
     schedule(() => {
         const ev = {
-            file: `evidence_${control.code.replace('.','_')}_${Date.now()}.pdf`,
+            file: `evidence_${control.code.replace(/\./g,'_')}_${Date.now()}.pdf`,
             hash: Array.from({length: 64}, () => '0123456789abcdef'[Math.floor(Math.random()*16)]).join(''),
-            content: `Documento aportado como evidencia del control ${control.code}. Incluye: procedimiento operativo, registros de ejecución de los últimos 6 meses, y actas de revisión.`
+            content: `Documento aportado como evidencia del control ${control.code}. Incluye: procedimiento, registros de ejecución últimos 6 meses, actas de revisión.`
         };
         showEvidence(ev);
-        log('ciso', ACTORS_POOL.ciso.name, `Evidencia del ${control.code} aportada en el data room. Hash SHA-256 verificado.`);
+        log('ciso', ACTORS_POOL.ciso.name, `Evidencia del ${control.code} aportada. Hash SHA-256 verificado.`);
+        updateScore(3, `Evidencia ${control.code}`);
     }, 3000);
 }
 
 function escalateFinding() {
     if (!state.running || state.findings.length === 0) return;
     const f = state.findings[state.findings.length - 1];
-    log('auditor_lider', ACTORS_POOL.auditor_lider.name, `ESCALO el hallazgo ${f.code} al Órgano Superior. Requiere respuesta ejecutiva en 48 horas.`);
+    log('auditor_lider', ACTORS_POOL.auditor_lider.name, `ESCALO el hallazgo ${f.code} al Órgano Superior. Respuesta en 48 horas.`);
     highlightActor('auditor_lider', 'hostile');
     state.incidents++;
     document.getElementById('stat-incidents').textContent = state.incidents;
+    addTimelineEvent(`ESCALADO: ${f.code}`, 'Al Órgano Superior', 'warning');
     
     schedule(() => {
-        if (ACTORS_POOL.superior && state.currentActors.find(a => a.id === 'superior')) {
-            log('superior', ACTORS_POOL.superior.name, `Recibido. Convoco comité extraordinario para abordar el hallazgo ${f.code}. El CISO presentará un plan de remediación en 48 horas.`);
+        if (state.currentActors.find(a => a.id === 'superior')) {
+            log('superior', ACTORS_POOL.superior.name, `Recibido. Convoco comité extraordinario. CISO presentará plan en 48h.`);
             highlightActor('superior');
         } else {
-            log('ciso', ACTORS_POOL.ciso.name, `Entendido. Prepararé un briefing ejecutivo para el Órgano Superior antes de 48 horas.`);
+            log('ciso', ACTORS_POOL.ciso.name, `Entendido. Prepararé briefing ejecutivo antes de 48h.`);
         }
+        updateScore(5, `Escalado ${f.code}`);
     }, 3500);
 }
 
 function generateReport() {
     if (!state.running) return;
-    log('auditor_lider', ACTORS_POOL.auditor_lider.name, `EMISIÓN DE INFORME PRELIMINAR. Nivel de conformidad global: ${Math.round(Object.values(state.metrics).reduce((a,b)=>a+b,0)/6)}%. Hallazgos críticos requieren acción inmediata.`);
+    log('auditor_lider', ACTORS_POOL.auditor_lider.name, `INFORME PRELIMINAR. Conformidad global: ${Math.round(Object.values(state.metrics).reduce((a,b)=>a+b,0)/6)}%. Hallazgos críticos requieren acción inmediata.`);
     highlightActor('auditor_lider');
     document.getElementById('btn-export').disabled = false;
+    addTimelineEvent('INFORME PRELIMINAR', 'Emitido', 'info');
+    updateScore(10, 'Informe preliminar');
 }
 
 function finalReport() {
@@ -1196,14 +2309,20 @@ function finalReport() {
     const str = state.findings.filter(f => f.severity === 'strength').length;
     const avg = Math.round(Object.values(state.metrics).reduce((a,b)=>a+b,0)/6);
     let dictamen = '';
-    if (majors === 0 && avg >= 85) dictamen = 'CONFORMIDAD PLENA';
-    else if (majors === 0 && avg >= 70) dictamen = 'CONFORMIDAD PARCIAL';
-    else if (majors <= 2) dictamen = 'NO CONFORMIDAD PARCIAL';
-    else dictamen = 'NO CONFORMIDAD';
+    let dictamenClass = '';
+    if (majors === 0 && avg >= 85) { dictamen = 'CONFORMIDAD PLENA'; dictamenClass = 'ok'; }
+    else if (majors === 0 && avg >= 70) { dictamen = 'CONFORMIDAD PARCIAL'; dictamenClass = 'ok'; }
+    else if (majors <= 2) { dictamen = 'NO CONFORMIDAD PARCIAL'; dictamenClass = 'warning'; }
+    else { dictamen = 'NO CONFORMIDAD'; dictamenClass = 'critical'; }
     
     log('system', 'SISTEMA', '═══════ INFORME FINAL DE AUDITORÍA ═══════');
-    log('auditor_lider', ACTORS_POOL.auditor_lider.name, `DICTAMEN: ${dictamen}. NC Mayores: ${majors}. NC Menores: ${minors}. Observaciones: ${obs}. Fortalezas: ${str}. Plazo PAC: 3 meses. Próxima auditoría de seguimiento en 6 meses.`);
+    log('auditor_lider', ACTORS_POOL.auditor_lider.name, `DICTAMEN: ${dictamen}. NC Mayores: ${majors}. Menores: ${minors}. Obs: ${obs}. Fortalezas: ${str}. PAC: 3 meses. Seguimiento: 6 meses.`);
     highlightActor('auditor_lider');
+    addTimelineEvent(`DICTAMEN: ${dictamen}`, `Puntuación final: ${state.score}`, dictamen === 'CONFORMIDAD PLENA' ? 'info' : dictamen.includes('NO') ? 'critical' : 'warning');
+    
+    // Bonus por puntuación
+    if (state.score >= 100) updateScore(20, 'Excelente trabajo');
+    else if (state.score >= 50) updateScore(10, 'Buen trabajo');
     
     document.getElementById('btn-pressure').disabled = true;
     document.getElementById('btn-evidence').disabled = true;
@@ -1214,27 +2333,77 @@ function finalReport() {
 }
 
 function exportReport() {
+    const avg = Math.round(Object.values(state.metrics).reduce((a,b)=>a+b,0)/6);
+    const majors = state.findings.filter(f => f.severity === 'major').length;
+    let dictamen = '';
+    if (majors === 0 && avg >= 85) dictamen = 'CONFORMIDAD PLENA';
+    else if (majors === 0 && avg >= 70) dictamen = 'CONFORMIDAD PARCIAL';
+    else if (majors <= 2) dictamen = 'NO CONFORMIDAD PARCIAL';
+    else dictamen = 'NO CONFORMIDAD';
+    
     const report = {
-        organization: state.org.name,
-        category: state.category,
-        difficulty: state.difficulty,
-        sector: state.org.sector,
-        auditDate: new Date().toISOString(),
-        metrics: state.metrics,
-        overallCompliance: Math.round(Object.values(state.metrics).reduce((a,b)=>a+b,0)/6),
-        findings: state.findings.map(f => ({
-            code: f.code,
-            control: f.control,
-            severity: f.severity,
-            title: f.title,
-            description: f.description
-        })),
+        header: {
+            title: 'INFORME DE AUDITORÍA ENS',
+            standard: 'RD 311/2022 - Esquema Nacional de Seguridad',
+            guideline: 'CCN-STIC-800',
+            auditDate: new Date().toISOString(),
+            auditType: state.type,
+            auditorEntity: 'CCN - Centro Criptológico Nacional',
+            accreditation: 'ENAC / Esquema-CCN'
+        },
+        organization: {
+            name: state.org.name,
+            sector: state.org.sector,
+            sede: state.org.sede,
+            systemCategory: state.category.toUpperCase(),
+            systems: state.org.systems,
+            difficulty: state.difficulty
+        },
+        scope: {
+            controlsApplicable: ENS_CONTROLS.filter(c => c.level === state.category || (state.category === 'alto') || (state.category === 'medio' && c.level === 'baja') || c.level === 'baja').length,
+            controlsAudited: state.auditedControls.size,
+            families: ['MP', 'OR', 'OP', 'CP', 'PT', 'RC']
+        },
+        maturity: {
+            metrics: state.metrics,
+            overallCompliance: avg,
+            radarData: Object.keys(state.metrics).map(f => ({ family: f, value: state.metrics[f] }))
+        },
+        findings: {
+            summary: {
+                major: state.findings.filter(f => f.severity === 'major').length,
+                minor: state.findings.filter(f => f.severity === 'minor').length,
+                observation: state.findings.filter(f => f.severity === 'observation').length,
+                strength: state.findings.filter(f => f.severity === 'strength').length,
+                total: state.findings.length
+            },
+            details: state.findings.map(f => ({
+                code: f.code,
+                control: f.control,
+                severity: f.severity,
+                title: f.title,
+                description: f.description,
+                remediation: f.remediation,
+                risk: f.risk,
+                evidence: f.evidence
+            }))
+        },
         evidences: state.evidences.map(e => ({
             file: e.file,
-            hash: e.hash
+            hash: e.hash,
+            content: e.content
         })),
         decisions: state.decisionsTaken,
-        incidents: state.incidents
+        incidents: state.incidents,
+        timeline: state.timeline,
+        chatHistory: state.chatHistory,
+        finalScore: state.score,
+        dictamen: dictamen,
+        recommendations: {
+            pacDeadline: '3 meses',
+            followupAudit: '6 meses',
+            priorityActions: state.findings.filter(f => f.severity === 'major').map(f => f.remediation)
+        }
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1244,11 +2413,19 @@ function exportReport() {
     a.click();
     URL.revokeObjectURL(url);
     log('system', 'SISTEMA', 'Informe exportado correctamente en formato JSON.');
+    addTimelineEvent('INFORME EXPORTADO', 'JSON descargado', 'info');
 }
 
 // Init
 drawRadar();
-buildHeatmap();
+buildChecklist();
+buildRiskMatrix();
+terminalLog('╔══════════════════════════════════════════════╗', 'info');
+terminalLog('║  ENS AUDIT COMMAND CENTER v3.0              ║', 'info');
+terminalLog('║  Sistema inicializado. Esperando auditoría. ║', 'info');
+terminalLog('╚══════════════════════════════════════════════╝', 'info');
+terminalLog('');
+terminalLog('Escribe "help" para ver comandos disponibles.', 'info');
 </script>
 </body>
 </html>
