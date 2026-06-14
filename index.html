@@ -23,19 +23,10 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--txt); font-family: 'Consolas', 'Monaco', 'Courier New', monospace; overflow: hidden; height: 100vh; font-size: 12px; }
 #matrix { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.06; pointer-events: none; }
-.scanline { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: linear-gradient(to bottom, transparent 50%, rgba(0,255,65,0.03) 50%); 
-    background-size: 100% 4px; pointer-events: none; z-index: 1; 
-    animation: scanlineMove 10s linear infinite;
-}
-@keyframes scanlineMove { 0% { background-position: 0 0; } 100% { background-position: 0 100%; } }
+.scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, transparent 50%, rgba(0,255,65,0.02) 50%); background-size: 100% 4px; pointer-events: none; z-index: 1; }
 
-.app { 
-    position: relative; z-index: 2; display: grid; 
-    grid-template-columns: 300px 1fr 380px; grid-template-rows: 50px 1fr 180px; 
-    gap: 6px; padding: 6px; height: 100vh; width: 100vw;
-}
+.app { position: relative; z-index: 2; display: grid; grid-template-columns: 300px 1fr 380px; grid-template-rows: 50px 1fr 180px; gap: 6px; padding: 6px; height: 100vh; opacity: 0; transition: opacity 1s ease-in; }
+.app.loaded { opacity: 1; }
 .panel { background: var(--panel); border: var(--border); border-radius: 4px; padding: 8px; overflow: hidden; backdrop-filter: blur(5px); display: flex; flex-direction: column; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
 .header { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 2px solid var(--green); background: rgba(0,20,0,0.3); }
 .header h1 { color: var(--green); font-size: 0.9rem; letter-spacing: 2px; text-shadow: var(--glow); display: flex; align-items: center; gap: 10px; }
@@ -59,7 +50,7 @@ body { background: var(--bg); color: var(--txt); font-family: 'Consolas', 'Monac
 
 .actors-sec { flex: 0 0 35%; overflow-y: auto; }
 .chat-sec { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-.guide-sec { flex: 0 0 130px; overflow: hidden; display: flex; flex-direction: column; border-top: 1px solid var(--dim); padding-top: 6px; transition: all 0.3s; }
+.guide-sec { flex: 0 0 130px; overflow: hidden; display: flex; flex-direction: column; border-top: 1px solid var(--dim); padding-top: 6px; }
 
 .actor { padding: 6px; margin-bottom: 4px; border-left: 3px solid var(--dim); background: rgba(255,255,255,0.02); font-size: 0.75rem; transition: all 0.3s; opacity: 0.6; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
 .actor.present { opacity: 1; border-left-color: var(--cyan); }
@@ -82,11 +73,10 @@ body { background: var(--bg); color: var(--txt); font-family: 'Consolas', 'Monac
 .chat-msg.you .who { color: var(--green); }
 .chat-row { display: flex; gap: 4px; flex-shrink: 0; }
 .chat-row select { flex: 0 0 110px; background: rgba(0,0,0,0.6); border: 1px solid var(--cyan); color: var(--cyan); padding: 4px; font-family: inherit; font-size: 0.7rem; border-radius: 2px; }
-.chat-row input { flex: 1; background: rgba(0,0,0,0.6); border: 1px solid var(--green); color: var(--green); padding: 4px; font-family: inherit; font-size: 0.7rem; border-radius: 2px; outline: none; }
-.chat-row input:focus { box-shadow: 0 0 5px var(--green); }
+.chat-row input { flex: 1; background: rgba(0,0,0,0.6); border: 1px solid var(--green); color: var(--green); padding: 4px; font-family: inherit; font-size: 0.7rem; border-radius: 2px; }
 .chat-row button { padding: 4px 10px; font-size: 0.7rem; border-radius: 2px; }
 
-.guide-box { flex: 1; background: rgba(255,221,0,0.05); border: 1px solid rgba(255,221,0,0.3); border-radius: 3px; padding: 6px; font-size: 0.72rem; color: var(--yellow); overflow-y: auto; line-height: 1.4; transition: all 0.3s; }
+.guide-box { flex: 1; background: rgba(255,221,0,0.05); border: 1px solid rgba(255,221,0,0.3); border-radius: 3px; padding: 6px; font-size: 0.72rem; color: var(--yellow); overflow-y: auto; line-height: 1.4; }
 .guide-box strong { color: var(--cyan); }
 
 .tabs { display: flex; gap: 2px; flex-shrink: 0; margin-bottom: 4px; flex-wrap: wrap; }
@@ -123,6 +113,7 @@ body { background: var(--bg); color: var(--txt); font-family: 'Consolas', 'Monac
 .term-row { display: flex; gap: 4px; flex-shrink: 0; margin-top: 4px; }
 .term-row span { color: var(--green); padding: 4px; }
 .term-row input { flex: 1; background: #000; border: 1px solid var(--green); color: var(--green); padding: 4px; font-family: 'Consolas', monospace; font-size: 0.78rem; outline: none; }
+.term-row input:focus { box-shadow: 0 0 5px var(--green); }
 
 .check-cont { flex: 1; overflow-y: auto; padding: 5px; }
 .check-item { display: flex; align-items: center; gap: 6px; padding: 5px; font-size: 0.72rem; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s; }
@@ -248,9 +239,9 @@ select option { background: #05080f; }
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: #000; z-index: 999; display: flex; flex-direction: column;
     justify-content: center; align-items: center; font-family: 'Consolas', monospace;
-    color: var(--green); padding: 20px; transition: opacity 0.5s ease-out;
+    color: var(--green); padding: 20px;
 }
-.boot-line { margin-bottom: 5px; width: 100%; max-width: 800px; opacity: 0; animation: bootFade 0.1s forwards; }
+.boot-line { opacity: 0; animation: bootFade 0.1s forwards; margin-bottom: 5px; width: 100%; max-width: 800px; }
 @keyframes bootFade { to { opacity: 1; } }
 </style>
 </head>
@@ -472,25 +463,6 @@ select option { background: #05080f; }
 'use strict';
 
 // ============================================================
-// 0. SISTEMA ANTI-FALLO GLOBAL
-// ============================================================
-window.onerror = function(message, source, lineno, colno, error) {
-    console.error("ERROR CRÍTICO:", message, source, lineno, error);
-    const bootScreen = document.getElementById('boot-screen');
-    if(bootScreen) {
-        bootScreen.innerHTML = `<div style="color:var(--red); text-align:center; padding:20px; border: 2px solid var(--red); border-radius: 8px; background: rgba(50,0,0,0.9);">
-            <h2>⚠ ERROR DE EJECUCIÓN DETECTADO</h2>
-            <p style="margin: 15px 0; color: var(--txt);">${message}</p>
-            <p style="font-size: 0.8rem; color: var(--dim);">Línea: ${lineno} | Archivo: ${source ? source.split('/').pop() : 'desconocido'}</p>
-            <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: var(--red); color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">REINTENTAR CARGA</button>
-        </div>`;
-        bootScreen.style.display = 'flex';
-        bootScreen.style.opacity = '1';
-    }
-    return true; // Previene el comportamiento por defecto del navegador
-};
-
-// ============================================================
 // 1. INICIALIZACIÓN Y BOOT SEQUENCE
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -500,9 +472,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function runBootSequence() {
     const bootContent = document.getElementById('boot-content');
-    const bootScreen = document.getElementById('boot-screen');
     const lines = [
-        "INICIANDO SISTEMA DE AUDITORÍA ENS v6.0...",
+        "INICIANDO SISTEMA DE AUDITORÍA ENS v5.0...",
         "Cargando módulos del CCN-STIC-800... [OK]",
         "Cargando mapeo ISO 27001:2022... [OK]",
         "Cargando directiva NIS2 (UE) 2022/2555... [OK]",
@@ -513,21 +484,23 @@ function runBootSequence() {
     
     let delay = 0;
     lines.forEach((line, index) => {
-        delay += 200 + Math.random() * 300;
+        delay += 300 + Math.random() * 400;
         setTimeout(() => {
             const div = document.createElement('div');
             div.className = 'boot-line';
+            div.style.animationDelay = '0s';
             div.textContent = `> ${line}`;
             bootContent.appendChild(div);
             
             if (index === lines.length - 1) {
                 setTimeout(() => {
-                    bootScreen.style.opacity = '0';
+                    document.getElementById('boot-screen').style.opacity = '0';
                     setTimeout(() => {
-                        bootScreen.style.display = 'none';
+                        document.getElementById('boot-screen').style.display = 'none';
+                        document.getElementById('main-app').classList.add('loaded');
                         initApp();
                     }, 500);
-                }, 600);
+                }, 800);
             }
         }, delay);
     });
@@ -540,7 +513,7 @@ function initApp() {
     buildInventory();
     buildDocs();
     termLog('╔════════════════════════════════════════════════╗', 'info');
-    termLog('║  PLATAFORMA DE AUDITORÍA ENS v6.0             ║', 'info');
+    termLog('║  PLATAFORMA DE AUDITORÍA ENS v5.0             ║', 'info');
     termLog('║  Sistema inicializado. Esperando auditoría.   ║', 'info');
     termLog('╚════════════════════════════════════════════════╝', 'info');
     termLog('Escribe "ayuda" o pulsa F1 para la guía.', 'info');
@@ -680,19 +653,6 @@ const FINDINGS = [
         ]
     },
     {
-        code: 'NC-M-005', control: 'OP.adq.1', severity: 'major', risk: { p: 4, i: 5 },
-        title: 'Compromiso de la cadena de suministro (Supply Chain Attack)',
-        description: 'Se detectó que un proveedor de mantenimiento remoto tiene acceso persistente con privilegios de administrador sin MFA, violando los requisitos de NIS2 Art. 21.2.d.',
-        remediation: 'Revocar accesos inmediatamente, implementar MFA obligatorio para terceros y segmentar la red de proveedores.',
-        evidence: { file: 'access_logs_provider.csv', hash: 'c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2', content: '2026-06-14 03:14:22, user=mant_ext_01, ip=185.220.101.45, action=LOGIN_SUCCESS, mfa=false, role=DOMAIN_ADMIN\n<span class="highlight">[!] ACCESO DE TERCEROS SIN MFA DETECTADO</span>' },
-        dialogues: [
-            { actor: 'auditor_tec', text: 'He encontrado sesiones activas de un proveedor externo con privilegios de dominio y sin autenticación multifactor.' },
-            { actor: 'ciso', text: 'Ese proveedor tiene un acuerdo de nivel de servicio (SLA) que exime de MFA para tareas de emergencia.' },
-            { actor: 'auditor_legal', text: 'Esa exención es inaceptable bajo NIS2. El Art. 21.2.d exige medidas de seguridad en la cadena de suministro, incluyendo MFA para accesos remotos.' },
-            { actor: 'legal', text: 'Esto es una violación grave. Debemos revocar ese acceso ahora mismo y notificar al proveedor.' }
-        ]
-    },
-    {
         code: 'NC-m-004', control: 'OP.adq.1', severity: 'minor', risk: { p: 3, i: 3 },
         title: 'Cadena de suministro: Cláusulas de seguridad insuficientes',
         description: 'El contrato con el proveedor Cloud no incluye el derecho de auditoría por parte del ENS.',
@@ -755,7 +715,21 @@ const DECISIONS = [
 ];
 
 const COMMANDS = {
-    ayuda: () => `COMANDOS DISPONIBLES:\n  ayuda              - Muestra esta ayuda\n  estado             - Estado actual de la auditoría\n  actores            - Lista actores presentes y su nivel de estrés\n  hallazgos          - Lista hallazgos detectados hasta ahora\n  controles [fam]    - Lista controles (MP, OR, OP, CP, PT, RC)\n  evidencia [cod]    - Muestra evidencia de un hallazgo (ej: evidencia NC-M-001)\n  riesgo             - Resumen de la matriz de riesgos Magerit\n  metricas           - Métricas de madurez por dominio\n  escanear [obj]     - Simula escaneo de vulnerabilidades (Nessus)\n  nmap [ip]          - Simula escaneo de puertos de red\n  leer_psi           - Analiza la Política de Seguridad de la Información\n  analizar_contrato  - Revisa cláusulas críticas de proveedores\n  forense            - Inicia análisis forense digital básico\n  limpiar            - Limpia la pantalla de la terminal`,
+    ayuda: () => `COMANDOS DISPONIBLES:
+  ayuda              - Muestra esta ayuda
+  estado             - Estado actual de la auditoría
+  actores            - Lista actores presentes y su nivel de estrés
+  hallazgos          - Lista hallazgos detectados hasta ahora
+  controles [fam]    - Lista controles (MP, OR, OP, CP, PT, RC)
+  evidencia [cod]    - Muestra evidencia de un hallazgo (ej: evidencia NC-M-001)
+  riesgo             - Resumen de la matriz de riesgos Magerit
+  metricas           - Métricas de madurez por dominio
+  escanear [obj]     - Simula escaneo de vulnerabilidades (Nessus)
+  nmap [ip]          - Simula escaneo de puertos de red
+  leer_psi           - Analiza la Política de Seguridad de la Información
+  analizar_contrato  - Revisa cláusulas críticas de proveedores
+  forense            - Inicia análisis forense digital básico
+  limpiar            - Limpia la pantalla de la terminal`,
     estado: () => !state.running ? '⚠ Auditoría no iniciada.' : `ESTADO DE LA AUDITORÍA\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOrganismo: ${state.org.name}\nCategoría: ${state.category.toUpperCase()} | Dificultad: ${state.difficulty}\nFase actual: ${['PRE-AUDITORÍA','PLANIFICACIÓN','EJECUCIÓN','INFORME','SEGUIMIENTO'][state.phase]}\nHallazgos: ${state.findings.length} | Evidencias: ${state.evidences.length}\nPuntuación: ${state.score} | Tiempo: ${document.getElementById('s-time').textContent}`,
     actores: () => state.currentActors.length ? state.currentActors.map(a => `• ${a.name} (${a.role}) - Estrés: ${a.stress.toUpperCase()}`).join('\n') : 'No hay actores en escena.',
     hallazgos: () => state.findings.length ? state.findings.map(f => `[${f.severity.toUpperCase()}] ${f.code}: ${f.title}`).join('\n') : 'No hay hallazgos detectados aún.',
@@ -787,8 +761,7 @@ const COMMANDS = {
     metricas: () => Object.keys(state.metrics).map(f => `${f.padEnd(3)}: ${state.metrics[f].toString().padStart(3)}% ${'█'.repeat(Math.floor(state.metrics[f]/5))}${'░'.repeat(20-Math.floor(state.metrics[f]/5))}`).join('\n'),
     escanear: (args) => {
         if (!state.running) return '⚠ Inicia la auditoría primero.';
-        return `[*] Iniciando escaneo de vulnerabilidades con motor Nessus...\n[*] Objetivo: ${args[0] || 'red_interna'}\n[+] Escaneo completado en 47:23 minutos\n[!] Vulnerabilidades encontradas: ${Math.floor(Math.random() * 6) + 2}\n    • Críticas (CVSS 9.0-10.0): ${Math.floor(Math.random() * 2)}\n    • Altas (CVSS 7.0-8.9): ${Math.floor(Math.random() * 3)}\n[+] Informe generado: escaneo_${Date.now()}.pdf`;
-    },
+        return `[*] Iniciando escaneo de vulnerabilidades con motor Nessus...\n[*] Objetivo: ${args[0] || 'red_interna'}\n[+] Escaneo completado en 47:23 minutos\n[!] Vulnerabilidades encontradas: ${Math.floor(Math.random() * 6) + 2}\n    • Críticas (CVSS 9.0-10.0): ${Math.floor(Math.random() * 2)}\n    • Altas (CVSS 7.0-8.9): ${Math.floor(Math.random() * 3)}\n[+] Informe generado: escaneo_${Date.now()}.pdf`,
     nmap: (args) => `Iniciando Nmap 7.94 ( https://nmap.org )\nExplorando ${args[0] || '10.20.30.0/24'}\nDescubrimiento de hosts: 5 hosts activos\nPUERTO     ESTADO SERVICIO       VERSIÓN\n22/tcp     abierto ssh           OpenSSH 8.9\n80/tcp     abierto http          Apache 2.4.57\n443/tcp    abierto https         nginx 1.25.3\n3389/tcp   abierto ms-wbt-server Microsoft Terminal Services\n[!] 1 servicio no estándar detectado en puerto 8080.`,
     leer_psi: () => `ANÁLISIS DE DOCUMENTO: PSI\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✓ Documento existe y está firmado por el Órgano Superior.\n⚠ ADVERTENCIA: La fecha de última revisión es de hace 18 meses (supera el ciclo anual recomendado por OR.pol.1).\n⚠ ADVERTENCIA: No se mencionan explícitamente los requisitos de la directiva NIS2 en la sección de gobernanza.\nRecomendación: Solicitar actualización inmediata.`,
     analizar_contrato: () => `ANÁLISIS DE CONTRATO DE PROVEEDOR\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚠ CLÁUSULA CRÍTICA DETECTADA: Renuncia al derecho de auditoría por parte del cliente.\n⚠ CLÁUSULA CRÍTICA DETECTADA: Permite la replicación de datos fuera del Espacio Económico Europeo (EEE).\nCumplimiento OP.adq.1: NO CONFORME.\nCumplimiento RGPD (Transferencias internacionales): EN RIESGO.`,
@@ -868,7 +841,6 @@ function addTimeline(title, desc, type = 'info') {
     const timeStr = now.toTimeString().split(' ')[0];
     state.timeline.push({ time: timeStr, title, desc, type });
     const cont = document.getElementById('tl-cont');
-    if(!cont) return;
     const ev = document.createElement('div');
     ev.style.cssText = `padding: 8px; margin-bottom: 8px; border-left: 3px solid ${type === 'critical' ? 'var(--red)' : type === 'warning' ? 'var(--orange)' : 'var(--cyan)'}; background: rgba(0,0,0,0.3); border-radius: 0 3px 3px 0;`;
     ev.innerHTML = `<div style="color:var(--cyan);font-size:0.7rem;font-weight:bold;">${timeStr} - ${title}</div><div style="font-size:0.75rem;margin-top:3px;">${desc}</div>`;
@@ -902,19 +874,6 @@ function updateGuide(phase) {
         "<strong>Fase 4: Seguimiento.</strong> Revisa el Plan de Acción Correctiva (PAC). Comprueba que las No Conformidades Mayores tienen un plan de remediación con fecha y responsable."
     ];
     guide.innerHTML = tips[phase-1] || tips[0];
-}
-
-function flashGuide(msg, duration = 5000) {
-    const guide = document.getElementById('guide-box');
-    if(!guide) return;
-    const originalContent = guide.innerHTML;
-    guide.innerHTML = `<strong style="color:var(--red)">⚠ ATENCIÓN:</strong><br><br>${msg}`;
-    guide.style.borderColor = 'var(--red)';
-    setTimeout(() => {
-        guide.innerHTML = originalContent;
-        guide.style.borderColor = 'rgba(255,221,0,0.3)';
-        updateGuide(state.phase);
-    }, duration);
 }
 
 function updateScore(delta, reason = '') {
@@ -1194,10 +1153,6 @@ function addFinding(finding) {
     }
     buildRiskMatrix();
     addTimeline(`HALLAZGO: ${finding.code}`, finding.title, finding.severity === 'major' ? 'critical' : 'warning');
-    
-    if(finding.severity === 'major') {
-        flashGuide(`Se ha detectado una <strong>No Conformidad Mayor (${finding.code})</strong>. Revisa la evidencia en el panel derecho y considera escalar el hallazgo o solicitar más información al CISO.`, 8000);
-    }
 }
 
 function showEvidence(ev) {
@@ -1295,21 +1250,8 @@ function sendChat() {
     cont.appendChild(youMsg);
     input.value = '';
     state.chatHistory.push({ from: 'tu', to: target, msg });
-    cont.scrollTop = cont.scrollHeight;
-
-    // Typing indicator
-    const typingId = 'typing-' + Date.now();
-    const typingMsg = document.createElement('div');
-    typingMsg.className = 'chat-msg';
-    typingMsg.id = typingId;
-    typingMsg.innerHTML = `<div class="who">${ACTORS[target].name}</div><div style="font-style:italic; color:var(--dim);">Escribiendo...</div>`;
-    cont.appendChild(typingMsg);
-    cont.scrollTop = cont.scrollHeight;
-
+    
     setTimeout(() => {
-        const typingEl = document.getElementById(typingId);
-        if(typingEl) typingEl.remove();
-
         const actor = ACTORS[target];
         if (!actor) return;
         highlightActor(target, 'speaking');
@@ -1332,7 +1274,8 @@ function sendChat() {
         state.chatHistory.push({ from: target, to: 'tu', msg: response });
         log(actor.class, actor.name, `[CHAT] ${response}`);
         updateScore(2, `Interrogatorio efectivo a ${actor.name}`);
-    }, 1500 + Math.random() * 1000);
+    }, 1000 + Math.random() * 1000);
+    cont.scrollTop = cont.scrollHeight;
 }
 
 function execCmd() {
@@ -1416,72 +1359,28 @@ function buildPAC() {
 function buildNetwork() {
     const cont = document.getElementById('net-cont');
     if(!cont) return;
-    
-    const nodes = [
-        { id: 'internet', label: 'INTERNET', x: 50, y: 10, type: 'external' },
-        { id: 'waf', label: 'WAF / Firewall', x: 50, y: 25, type: 'secure' },
-        { id: 'dmz', label: 'Zona DMZ', x: 30, y: 45, type: 'secure' },
-        { id: 'internal', label: 'Red Interna', x: 70, y: 45, type: 'secure' },
-        { id: 'app', label: 'Servidores App', x: 70, y: 65, type: 'secure' },
-        { id: 'db', label: 'Base de Datos', x: 70, y: 85, type: 'secure' },
-        { id: 'backup', label: 'Backups Aislados', x: 30, y: 85, type: 'secure' },
-        { id: 'cloud', label: 'Proveedor Cloud', x: 90, y: 65, type: 'external' }
-    ];
-
     const hasNC1 = state.findings.find(f => f.code === 'NC-M-001');
     const hasNC2 = state.findings.find(f => f.code === 'NC-M-002');
-
-    if (hasNC1) {
-        const appNode = nodes.find(n => n.id === 'app');
-        if(appNode) appNode.type = 'compromised';
-    }
-    if (hasNC2) {
-        const dmzNode = nodes.find(n => n.id === 'dmz');
-        if(dmzNode) dmzNode.type = 'compromised';
-    }
-
-    const links = [
-        { from: 'internet', to: 'waf', status: 'normal' },
-        { from: 'waf', to: 'dmz', status: 'normal' },
-        { from: 'waf', to: 'internal', status: 'normal' },
-        { from: 'internal', to: 'app', status: hasNC1 ? 'alert' : 'normal' },
-        { from: 'app', to: 'db', status: hasNC1 ? 'alert' : 'encrypted' },
-        { from: 'internal', to: 'backup', status: 'encrypted' },
-        { from: 'internal', to: 'cloud', status: 'encrypted' }
-    ];
-
-    let svgContent = `<svg width="100%" height="100%" viewBox="0 0 100 100" style="background: rgba(0,0,0,0.5);">`;
     
-    links.forEach(link => {
-        const fromNode = nodes.find(n => n.id === link.from);
-        const toNode = nodes.find(n => n.id === link.to);
-        if (!fromNode || !toNode) return;
-        
-        const color = link.status === 'alert' ? '#ff2a2a' : link.status === 'encrypted' ? '#00ff41' : '#00f3ff';
-        const dash = link.status === 'encrypted' ? 'stroke-dasharray="2,2"' : '';
-        
-        svgContent += `<line x1="${fromNode.x}" y1="${fromNode.y}" x2="${toNode.x}" y2="${toNode.y}" stroke="${color}" stroke-width="0.5" ${dash} opacity="0.6" />`;
-    });
-
-    nodes.forEach(node => {
-        const color = node.type === 'compromised' ? '#ff2a2a' : node.type === 'external' ? '#ff8800' : '#00f3ff';
-        const glow = node.type === 'compromised' ? 'filter="drop-shadow(0 0 3px #ff2a2a)"' : '';
-        
-        svgContent += `<g>
-            <circle cx="${node.x}" cy="${node.y}" r="4" fill="#05080f" stroke="${color}" stroke-width="1" ${glow} />
-            <text x="${node.x}" y="${node.y - 6}" fill="${color}" font-size="3" text-anchor="middle" font-family="monospace">${node.label}</text>
-        </g>`;
-    });
-
-    svgContent += `</svg>`;
-    cont.innerHTML = svgContent;
+    cont.innerHTML = `<div style="text-align:center;width:100%;"><pre style="color:var(--green);font-size:0.75rem;line-height:1.4;">
+      [ INTERNET ]
+          │
+     [ FIREWALL ] ─── (WAF)
+      ╱         ╲
+  [ DMZ ]     [ RED INTERNA ]
+    │            ├─ [ APP SERVER ] ${hasNC1 ? '<span style="color:var(--red)">⚠ SIN CIFRAR</span>' : '<span style="color:var(--green)">✓ SEGURO</span>'}
+    │            ├─ [ BBDD CLIENTES ]
+    │            └─ [ LEGACY SERVER ] ${hasNC2 ? '<span style="color:var(--red)">⚠ SIN PARCHES</span>' : '<span style="color:var(--green)">✓ SEGURO</span>'}
+    │
+ [ PROVEEDOR CLOUD ] ─── (VPN IPSec)
+</pre></div>`;
 }
 
 function switchTab(tabName, event) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     
-    if (event && event.target && event.target.classList.contains('tab')) {
+    if (event && event.target) {
         event.target.classList.add('active');
     } else {
         const tabEl = document.querySelector(`.tab[onclick*="${tabName}"]`);
@@ -1515,7 +1414,7 @@ function generateScenario() {
     if (orgKey === 'aleatoria') orgKey = pickRandom(Object.keys(ORGS));
     state.org = ORGS[orgKey];
     let cat = document.getElementById('sel-cat').value;
-    if (cat === 'aleatoria') cat = state.org.cat || 'alto';
+    if (cat === 'aleatoria') cat = state.org.cat;
     state.category = cat;
     state.difficulty = document.getElementById('sel-diff').value;
     state.type = document.getElementById('sel-type').value;
@@ -1742,8 +1641,8 @@ function escalate() {
     document.getElementById('s-inc').textContent = state.incidents;
     addTimeline(`ESCALADO: ${f.code}`, 'Al Órgano Superior', 'warning');
     schedule(() => {
-        const actor = state.currentActors.find(a => a.id === 'legal' || a.id === 'cio');
-        if (actor) {
+        if (state.currentActors.find(a => a.id === 'legal' || a.id === 'cio')) {
+            const actor = state.currentActors.find(a => a.id === 'legal') || state.currentActors.find(a => a.id === 'cio');
             log(actor.class, actor.name, `Recibido. Convocamos comité de crisis extraordinario. Se presentará plan de remediación en 48h.`);
             highlightActor(actor.id);
         } else {
@@ -1833,6 +1732,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// Cerrar modal al hacer clic fuera
 document.getElementById('modal-ov').addEventListener('click', (e) => {
     if (e.target.id === 'modal-ov') closeModal();
 });
