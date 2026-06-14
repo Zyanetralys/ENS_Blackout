@@ -25,7 +25,8 @@ body { background: var(--bg); color: var(--txt); font-family: 'Consolas', 'Monac
 #matrix { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.06; pointer-events: none; }
 .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, transparent 50%, rgba(0,255,65,0.02) 50%); background-size: 100% 4px; pointer-events: none; z-index: 1; }
 
-.app { position: relative; z-index: 2; display: grid; grid-template-columns: 300px 1fr 380px; grid-template-rows: 50px 1fr 180px; gap: 6px; padding: 6px; height: 100vh; }
+.app { position: relative; z-index: 2; display: grid; grid-template-columns: 300px 1fr 380px; grid-template-rows: 50px 1fr 180px; gap: 6px; padding: 6px; height: 100vh; opacity: 0; transition: opacity 1s ease-in; }
+.app.loaded { opacity: 1; }
 .panel { background: var(--panel); border: var(--border); border-radius: 4px; padding: 8px; overflow: hidden; backdrop-filter: blur(5px); display: flex; flex-direction: column; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
 .header { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 2px solid var(--green); background: rgba(0,20,0,0.3); }
 .header h1 { color: var(--green); font-size: 0.9rem; letter-spacing: 2px; text-shadow: var(--glow); display: flex; align-items: center; gap: 10px; }
@@ -54,7 +55,8 @@ body { background: var(--bg); color: var(--txt); font-family: 'Consolas', 'Monac
 .actor { padding: 6px; margin-bottom: 4px; border-left: 3px solid var(--dim); background: rgba(255,255,255,0.02); font-size: 0.75rem; transition: all 0.3s; opacity: 0.6; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
 .actor.present { opacity: 1; border-left-color: var(--cyan); }
 .actor.speaking { border-left-color: var(--green); background: rgba(0,255,65,0.1); box-shadow: 0 0 8px rgba(0,255,65,0.2); opacity: 1; }
-.actor.hostile { border-left-color: var(--red); background: rgba(255,42,42,0.1); opacity: 1; }
+.actor.hostile { border-left-color: var(--red); background: rgba(255,42,42,0.1); opacity: 1; animation: shake 0.5s; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 .actor-info { display: flex; flex-direction: column; }
 .aname { font-weight: bold; color: var(--green); font-size: 0.75rem; }
 .arole { font-size: 0.65rem; color: var(--dim); }
@@ -110,7 +112,8 @@ body { background: var(--bg); color: var(--txt); font-family: 'Consolas', 'Monac
 .term-line.info { color: var(--yellow); }
 .term-row { display: flex; gap: 4px; flex-shrink: 0; margin-top: 4px; }
 .term-row span { color: var(--green); padding: 4px; }
-.term-row input { flex: 1; background: #000; border: 1px solid var(--green); color: var(--green); padding: 4px; font-family: 'Consolas', monospace; font-size: 0.78rem; }
+.term-row input { flex: 1; background: #000; border: 1px solid var(--green); color: var(--green); padding: 4px; font-family: 'Consolas', monospace; font-size: 0.78rem; outline: none; }
+.term-row input:focus { box-shadow: 0 0 5px var(--green); }
 
 .check-cont { flex: 1; overflow-y: auto; padding: 5px; }
 .check-item { display: flex; align-items: center; gap: 6px; padding: 5px; font-size: 0.72rem; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s; }
@@ -167,7 +170,7 @@ body { background: var(--bg); color: var(--txt); font-family: 'Consolas', 'Monac
 .ftitle { font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.72rem; }
 .fcontrol { font-size: 0.62rem; opacity: 0.8; display: flex; gap: 4px; flex-wrap: wrap; }
 
-.ev-box { padding: 8px; background: rgba(0,0,0,0.6); border: 1px dashed var(--cyan); font-size: 0.7rem; border-radius: 3px; flex-shrink: 0; max-height: 130px; overflow-y: auto; font-family: 'Consolas', monospace; }
+.ev-box { padding: 8px; background: rgba(0,0,0,0.8); border: 1px solid var(--cyan); font-size: 0.7rem; border-radius: 3px; flex-shrink: 0; max-height: 150px; overflow-y: auto; font-family: 'Consolas', monospace; }
 .ev-box .hash { color: var(--green); font-size: 0.62rem; word-break: break-all; margin-top: 4px; }
 
 button { background: transparent; border: 1px solid var(--green); color: var(--green); padding: 5px 10px; font-family: inherit; font-size: 0.7rem; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; border-radius: 3px; }
@@ -183,7 +186,7 @@ button.info:hover:not(:disabled) { background: var(--cyan); color: black; }
 .brow { display: flex; gap: 4px; flex-wrap: wrap; }
 .brow button { flex: 1; min-width: 80px; font-size: 0.68rem; padding: 5px; }
 
-select, input { background: rgba(0,0,0,0.6); border: 1px solid var(--green); color: var(--green); padding: 4px; font-family: inherit; font-size: 0.7rem; border-radius: 2px; }
+select, input.cfg-input { background: rgba(0,0,0,0.6); border: 1px solid var(--green); color: var(--green); padding: 4px; font-family: inherit; font-size: 0.7rem; border-radius: 2px; }
 select { width: 100%; margin-bottom: 4px; }
 select option { background: #05080f; }
 
@@ -210,11 +213,11 @@ select option { background: #05080f; }
 .modal-field .value.warning { color: var(--orange); }
 .modal-field .value.ok { color: var(--green); }
 
-.code-viewer { background: #000; border: 1px solid #333; padding: 10px; font-family: 'Consolas', monospace; font-size: 0.75rem; color: #ccc; border-radius: 3px; overflow-x: auto; white-space: pre; margin-top: 5px; }
+.code-viewer { background: #000; border: 1px solid #333; padding: 10px; font-family: 'Consolas', monospace; font-size: 0.75rem; color: #ccc; border-radius: 3px; overflow-x: auto; white-space: pre; margin-top: 5px; line-height: 1.4; }
 .code-viewer .highlight { color: var(--red); background: rgba(255,42,42,0.2); font-weight: bold; }
 .code-viewer .comment { color: var(--dim); }
 
-.toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.95); border: 1px solid var(--green); padding: 10px 20px; border-radius: 4px; color: var(--green); font-size: 0.8rem; z-index: 200; animation: toastIn 0.3s, toastOut 0.3s 2.7s forwards; box-shadow: 0 0 20px rgba(0,255,65,0.3); }
+.toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.95); border: 1px solid var(--green); padding: 10px 20px; border-radius: 4px; color: var(--green); font-size: 0.8rem; z-index: 200; animation: toastIn 0.3s, toastOut 0.3s 2.7s forwards; box-shadow: 0 0 20px rgba(0,255,65,0.3); pointer-events: none; }
 @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes toastOut { to { opacity: 0; transform: translate(-50%, 20px); } }
 
@@ -231,6 +234,15 @@ select option { background: #05080f; }
 .help-box p, .help-box li { font-size: 0.85rem; margin-bottom: 6px; line-height: 1.5; color: var(--txt); }
 .help-box code { background: rgba(0,255,65,0.1); padding: 2px 6px; border-radius: 3px; color: var(--green); font-family: 'Consolas', monospace; }
 .help-box ul { padding-left: 20px; }
+
+#boot-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #000; z-index: 999; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; font-family: 'Consolas', monospace;
+    color: var(--green); padding: 20px;
+}
+.boot-line { opacity: 0; animation: bootFade 0.1s forwards; margin-bottom: 5px; width: 100%; max-width: 800px; }
+@keyframes bootFade { to { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -238,7 +250,11 @@ select option { background: #05080f; }
 <canvas id="matrix"></canvas>
 <div class="scanline"></div>
 
-<div class="app">
+<div id="boot-screen">
+    <div id="boot-content"></div>
+</div>
+
+<div class="app" id="main-app">
     <div class="panel header">
         <h1>🛡️ CENTRO DE MANDO: AUDITORÍA ENS + NIS2 + ISO 27001</h1>
         <div class="hinfo">
@@ -261,35 +277,35 @@ select option { background: #05080f; }
             <div class="chat-msgs" id="chat-msgs"></div>
             <div class="chat-row">
                 <select id="chat-target"></select>
-                <input type="text" id="chat-input" placeholder="Pregunta al actor (ej: '¿Por qué no se parchea?')..." onkeypress="if(event.key==='Enter')sendChat()">
+                <input type="text" id="chat-input" placeholder="Pregunta al actor..." onkeypress="if(event.key==='Enter')sendChat()">
                 <button onclick="sendChat()">▶</button>
             </div>
         </div>
         <div class="guide-sec">
-            <div class="ptitle">> 🎓 MODO GUÍA DEL AUDITOR <span class="help-icon" title="Consejos contextuales para aprender paso a paso">?</span></div>
+            <div class="ptitle">> 🎓 MODO GUÍA DEL AUDITOR <span class="help-icon" title="Consejos contextuales">?</span></div>
             <div class="guide-box" id="guide-box">
                 <strong>Bienvenido, Auditor.</strong><br><br>
-                Estás a punto de iniciar una auditoría realista. <br><br>
+                Estás a punto de iniciar una auditoría realista.<br><br>
                 <strong>Paso 1:</strong> Configura el escenario abajo y pulsa "INICIAR".<br>
-                <strong>Paso 2:</strong> Observa la Fase de Planificación. Revisa la PSI y el alcance.<br>
-                <strong>Paso 3:</strong> En Ejecución, usa el Chat, la Terminal y solicita Evidencias.<br>
-                <strong>Paso 4:</strong> Toma decisiones. Tus elecciones afectan el estrés de los actores y tu puntuación.<br><br>
-                <em>💡 Consejo: Presta atención a los mapeos con NIS2 e ISO 27001 en los hallazgos.</em>
+                <strong>Paso 2:</strong> Observa la Fase de Planificación. Revisa la PSI.<br>
+                <strong>Paso 3:</strong> En Ejecución, usa el Chat, Terminal y Evidencias.<br>
+                <strong>Paso 4:</strong> Toma decisiones. Afectan al estrés y puntuación.<br><br>
+                <em>💡 Consejo: Presta atención a los mapeos con NIS2 e ISO 27001.</em>
             </div>
         </div>
     </div>
 
     <div class="panel center">
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('log',event)">📜 Registro</div>
-            <div class="tab" onclick="switchTab('terminal',event)">💻 Terminal</div>
-            <div class="tab" onclick="switchTab('checklist',event)">✅ Checklist ENS</div>
-            <div class="tab" onclick="switchTab('risk',event)">⚠ Matriz Riesgos</div>
-            <div class="tab" onclick="switchTab('timeline',event)">⏱ Cronología</div>
-            <div class="tab" onclick="switchTab('network',event)">🌐 Topología Red</div>
-            <div class="tab" onclick="switchTab('inventory',event)">📦 Inventario Activos</div>
-            <div class="tab" onclick="switchTab('docs',event)">📄 Documentos</div>
-            <div class="tab" onclick="switchTab('pac',event)">🔧 Plan Acción (PAC)</div>
+            <div class="tab active" onclick="switchTab('log', event)">📜 Registro</div>
+            <div class="tab" onclick="switchTab('terminal', event)">💻 Terminal</div>
+            <div class="tab" onclick="switchTab('checklist', event)">✅ Checklist</div>
+            <div class="tab" onclick="switchTab('risk', event)">⚠ Riesgos</div>
+            <div class="tab" onclick="switchTab('timeline', event)">⏱ Cronología</div>
+            <div class="tab" onclick="switchTab('network', event)">🌐 Red</div>
+            <div class="tab" onclick="switchTab('inventory', event)">📦 Inventario</div>
+            <div class="tab" onclick="switchTab('docs', event)">📄 Documentos</div>
+            <div class="tab" onclick="switchTab('pac', event)">🔧 PAC</div>
         </div>
         <div class="phase-ind">
             <div class="phase" id="ph-1" data-label="1. PLANIFICACIÓN"></div>
@@ -310,14 +326,14 @@ select option { background: #05080f; }
             <div class="tab-pane active" id="tab-log"><div class="log-cont" id="log-cont"></div></div>
             <div class="tab-pane" id="tab-terminal">
                 <div class="term-cont" id="term-out"></div>
-                <div class="term-row"><span>auditor@ccn:~$</span><input type="text" id="term-in" placeholder="Escribe 'ayuda' para ver comandos..." onkeypress="if(event.key==='Enter')execCmd()"></div>
+                <div class="term-row"><span>auditor@ccn:~$</span><input type="text" id="term-in" placeholder="Escribe 'ayuda'..." onkeypress="if(event.key==='Enter')execCmd()"></div>
             </div>
             <div class="tab-pane" id="tab-checklist"><div class="check-cont" id="check-cont"></div></div>
             <div class="tab-pane" id="tab-risk">
-                <div style="padding:8px;font-size:0.75rem;color:var(--cyan);text-align:center;font-weight:bold;">MATRIZ DE RIESGOS (MAGERIT v3) - PROBABILIDAD × IMPACTO</div>
+                <div style="padding:8px;font-size:0.75rem;color:var(--cyan);text-align:center;font-weight:bold;">MATRIZ DE RIESGOS (MAGERIT v3)</div>
                 <div class="risk-matrix" id="risk-matrix"></div>
             </div>
-            <div class="tab-pane" id="tab-timeline"><div class="log-cont" id="tl-cont" style="padding:10px;"></div></div>
+            <div class="tab-pane" id="tab-timeline"><div class="log-cont" id="tl-cont"></div></div>
             <div class="tab-pane" id="tab-network"><div class="term-cont" id="net-cont" style="display:flex;align-items:center;justify-content:center;color:var(--dim);">Inicia la auditoría para generar la topología.</div></div>
             <div class="tab-pane" id="tab-inventory"><div class="check-cont" id="inv-cont"></div></div>
             <div class="tab-pane" id="tab-docs"><div class="check-cont" id="doc-cont"></div></div>
@@ -338,11 +354,11 @@ select option { background: #05080f; }
         </div>
         <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; min-height: 0;">
             <div>
-                <div class="ptitle">> HALLAZGOS DETECTADOS <span class="badge red" id="f-count">0</span></div>
+                <div class="ptitle">> HALLAZGOS <span class="badge red" id="f-count">0</span></div>
                 <div id="find-list"></div>
             </div>
             <div>
-                <div class="ptitle">> VISOR DE EVIDENCIA ACTIVA</div>
+                <div class="ptitle">> VISOR DE EVIDENCIA</div>
                 <div class="ev-box" id="ev-box" style="display:none;">
                     <strong style="color: var(--cyan);">📁 ARCHIVO:</strong> <span id="ev-file"></span><br>
                     <div class="code-viewer" id="ev-cont"></div>
@@ -397,14 +413,14 @@ select option { background: #05080f; }
         </div>
         <div style="flex-shrink:0;">
             <div class="brow">
-                <button id="b-start" onclick="startAudit()">▶ INICIAR AUDITORÍA</button>
+                <button id="b-start" onclick="startAudit()">▶ INICIAR</button>
                 <button id="b-restart" onclick="restart()" disabled>↻ REINICIAR</button>
                 <button id="b-press" onclick="applyPressure()" disabled class="danger">⚡ PRESIÓN</button>
                 <button id="b-ev" onclick="requestEvidence()" disabled class="info">🔍 EVIDENCIA</button>
                 <button id="b-esc" onclick="escalate()" disabled class="warning">⬆ ESCALAR</button>
                 <button id="b-rep" onclick="prelimReport()" disabled>📋 PRELIMINAR</button>
-                <button id="b-fin" onclick="finalReport()" disabled>📜 INFORME FINAL</button>
-                <button id="b-exp" onclick="exportReport()" disabled>💾 EXPORTAR JSON</button>
+                <button id="b-fin" onclick="finalReport()" disabled>📜 FINAL</button>
+                <button id="b-exp" onclick="exportReport()" disabled>💾 EXPORTAR</button>
             </div>
         </div>
     </div>
@@ -421,101 +437,150 @@ select option { background: #05080f; }
     <div class="help-box">
         <span class="modal-close" onclick="document.getElementById('help-ov').classList.remove('active')">×</span>
         <h2>🎓 GUÍA DE APRENDIZAJE: AUDITORÍA ENS, NIS2 e ISO 27001</h2>
-        
-        <h3>🎯 Objetivo de la Simulación</h3>
-        <p>Aprender a ejecutar una auditoría de seguridad realista siguiendo el <strong>Esquema Nacional de Seguridad (RD 311/2022)</strong>, integrando los requisitos de la directiva <strong>NIS2</strong> y la norma <strong>ISO/IEC 27001:2022</strong>. Actuarás como Auditor Líder acreditado.</p>
-        
+        <h3>🎯 Objetivo</h3>
+        <p>Aprender a ejecutar una auditoría de seguridad realista siguiendo el Esquema Nacional de Seguridad (RD 311/2022), integrando NIS2 e ISO/IEC 27001:2022.</p>
         <h3>🏛️ Los 6 Dominios del ENS</h3>
         <ul>
-            <li><strong>MP (Medidas de Protección):</strong> Cifrado, logs, configuración segura, backups.</li>
-            <li><strong>OR (Organización):</strong> PSI, roles, formación, auditorías internas.</li>
-            <li><strong>OP (Operación):</strong> Gestión de proveedores, adquisición segura, monitorización.</li>
-            <li><strong>CP (Continuidad):</strong> Análisis de impacto (BIA), planes de recuperación, simulacros.</li>
-            <li><strong>PT (Protección Física):</strong> Control de accesos a CPD, protección de equipos.</li>
-            <li><strong>RC (Reacciones):</strong> Gestión de incidentes, notificación al CCN-CERT, lecciones aprendidas.</li>
+            <li><strong>MP:</strong> Cifrado, logs, configuración segura, backups.</li>
+            <li><strong>OR:</strong> PSI, roles, formación, auditorías internas.</li>
+            <li><strong>OP:</strong> Gestión de proveedores, adquisición segura.</li>
+            <li><strong>CP:</strong> Análisis de impacto (BIA), planes de recuperación.</li>
+            <li><strong>PT:</strong> Control de accesos a CPD, protección de equipos.</li>
+            <li><strong>RC:</strong> Gestión de incidentes, notificación al CCN-CERT.</li>
         </ul>
-
-        <h3>🔗 Mapeo con Otros Marcos Normativos</h3>
-        <p>En la checklist y hallazgos verás etiquetas:</p>
-        <ul>
-            <li><span class="fw-tag iso">ISO 27001</span>: Controles del Anexo A de la versión 2022 (ej. A.8.24 Criptografía).</li>
-            <li><span class="fw-tag nis2">NIS2</span>: Artículos de la Directiva (UE) 2022/2555 (ej. Art. 21.2 Medidas de gestión de riesgos).</li>
-        </ul>
-
-        <h3>⌨️ Atajos de Teclado y Comandos</h3>
+        <h3>⌨️ Atajos de Teclado</h3>
         <ul>
             <li><code>F1</code>: Mostrar esta guía.</li>
-            <li><code>F2</code>: Iniciar auditoría rápidamente.</li>
+            <li><code>F2</code>: Iniciar auditoría.</li>
             <li><code>F5</code>: Reiniciar el escenario.</li>
             <li><code>Ctrl + E</code>: Exportar el informe final.</li>
             <li><code>1 a 9</code>: Cambiar entre las pestañas superiores.</li>
-            <li><strong>Terminal:</strong> Escribe <code>ayuda</code> dentro de la pestaña Terminal para ver comandos como <code>escanear</code>, <code>nmap</code>, <code>leer_psi</code>, <code>analizar_contrato</code>.</li>
-        </ul>
-
-        <h3>💡 Consejos para una Auditoría Exitosa</h3>
-        <ul>
-            <li>No aceptes "sí" por respuesta. Usa el botón <strong>🔍 EVIDENCIA</strong> para solicitar pruebas tangibles.</li>
-            <li>Observa el <strong>medidor de estrés</strong> de los actores. Un CISO estresado puede ocultar información; un Sysadmin estresado puede cometer errores.</li>
-            <li>Si detectas un incidente activo (modo Caos/Forense), prioriza la contención (RC.inc.1) sobre la burocracia.</li>
-            <li>Las decisiones que tomes afectan tu puntuación final y el dictamen de la auditoría.</li>
         </ul>
     </div>
 </div>
 
 <script>
-// ============================================================
-// MOTOR GRÁFICO: LLUVIA MATRIX
-// ============================================================
-const canvas = document.getElementById('matrix');
-const ctx = canvas.getContext('2d');
-function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEF@#$%';
-const fontSize = 14;
-let columns = Math.floor(canvas.width / fontSize);
-let drops = Array(columns).fill(1);
-function drawMatrix() {
-    ctx.fillStyle = 'rgba(5, 8, 15, 0.08)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#00ff41';
-    ctx.font = fontSize + 'px monospace';
-    for (let i = 0; i < drops.length; i++) {
-        const text = chars[Math.floor(Math.random() * chars.length)];
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-    }
-}
-setInterval(drawMatrix, 50);
+'use strict';
 
 // ============================================================
-// BASE DE DATOS EXPANDIDA Y REALISTA
+// 1. INICIALIZACIÓN Y BOOT SEQUENCE
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    initMatrix();
+    runBootSequence();
+});
+
+function runBootSequence() {
+    const bootContent = document.getElementById('boot-content');
+    const lines = [
+        "INICIANDO SISTEMA DE AUDITORÍA ENS v5.0...",
+        "Cargando módulos del CCN-STIC-800... [OK]",
+        "Cargando mapeo ISO 27001:2022... [OK]",
+        "Cargando directiva NIS2 (UE) 2022/2555... [OK]",
+        "Estableciendo conexión segura con el repositorio... [OK]",
+        "Verificando integridad de controles... [OK]",
+        "Sistema listo. Bienvenido, Auditor."
+    ];
+    
+    let delay = 0;
+    lines.forEach((line, index) => {
+        delay += 300 + Math.random() * 400;
+        setTimeout(() => {
+            const div = document.createElement('div');
+            div.className = 'boot-line';
+            div.style.animationDelay = '0s';
+            div.textContent = `> ${line}`;
+            bootContent.appendChild(div);
+            
+            if (index === lines.length - 1) {
+                setTimeout(() => {
+                    document.getElementById('boot-screen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('boot-screen').style.display = 'none';
+                        document.getElementById('main-app').classList.add('loaded');
+                        initApp();
+                    }, 500);
+                }, 800);
+            }
+        }, delay);
+    });
+}
+
+function initApp() {
+    drawRadar();
+    buildChecklist();
+    buildRiskMatrix();
+    buildInventory();
+    buildDocs();
+    termLog('╔════════════════════════════════════════════════╗', 'info');
+    termLog('║  PLATAFORMA DE AUDITORÍA ENS v5.0             ║', 'info');
+    termLog('║  Sistema inicializado. Esperando auditoría.   ║', 'info');
+    termLog('╚════════════════════════════════════════════════╝', 'info');
+    termLog('Escribe "ayuda" o pulsa F1 para la guía.', 'info');
+    showToast('Sistema inicializado. Pulsa F1 para la guía.');
+}
+
+// ============================================================
+// 2. EFECTO MATRIX
+// ============================================================
+let matrixInterval;
+function initMatrix() {
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    
+    function resize() { 
+        canvas.width = window.innerWidth; 
+        canvas.height = window.innerHeight; 
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    
+    const chars = 'アイウエオカキクケコサシスセソタチツテト0123456789ABCDEF';
+    const fontSize = 14;
+    let columns = Math.floor(canvas.width / fontSize);
+    let drops = Array(columns).fill(1);
+    
+    function draw() {
+        ctx.fillStyle = 'rgba(5, 8, 15, 0.08)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00ff41';
+        ctx.font = fontSize + 'px monospace';
+        for (let i = 0; i < drops.length; i++) {
+            const text = chars[Math.floor(Math.random() * chars.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        }
+    }
+    matrixInterval = setInterval(draw, 50);
+}
+
+// ============================================================
+// 3. BASE DE DATOS
 // ============================================================
 const ORGS = {
-    admin: { name: 'Ministerio de Hacienda y Función Pública', cat: 'alto', sector: 'AGE', sede: 'Madrid', critical: false },
-    sanidad: { name: 'Servicio Madrileño de Salud (SERMAS)', cat: 'alto', sector: 'Salud', sede: 'Madrid', critical: true },
-    energia: { name: 'Red Eléctrica de España (Operador Esencial)', cat: 'alto', sector: 'Energía', sede: 'Madrid', critical: true, nis2: true },
-    banca: { name: 'Entidad Financiera Sistémica', cat: 'alto', sector: 'Financiero', sede: 'Madrid', critical: true, dora: true },
-    teleco: { name: 'Operador de Telecomunicaciones Principal', cat: 'alto', sector: 'Telecomunicaciones', sede: 'Madrid', critical: true, nis2: true },
-    ayto: { name: 'Ayuntamiento Metropolitano', cat: 'medio', sector: 'Admin. Local', sede: 'Barcelona', critical: false },
-    defensa: { name: 'Mando de Sistemas de Información (Defensa)', cat: 'alto', sector: 'Defensa', sede: 'Madrid', sedeClas: 'RESTRINGIDO', critical: true }
+    admin: { name: 'Ministerio de Hacienda y Función Pública', cat: 'alto', sector: 'AGE' },
+    sanidad: { name: 'Servicio Madrileño de Salud (SERMAS)', cat: 'alto', sector: 'Salud' },
+    energia: { name: 'Red Eléctrica de España (Operador Esencial)', cat: 'alto', sector: 'Energía', nis2: true },
+    banca: { name: 'Entidad Financiera Sistémica', cat: 'alto', sector: 'Financiero', dora: true },
+    teleco: { name: 'Operador de Telecomunicaciones Principal', cat: 'alto', sector: 'Telecomunicaciones', nis2: true },
+    ayto: { name: 'Ayuntamiento Metropolitano', cat: 'medio', sector: 'Admin. Local' },
+    defensa: { name: 'Mando de Sistemas de Información', cat: 'alto', sector: 'Defensa' }
 };
 
 const ACTORS = {
-    auditor_lider: { id: 'auditor_lider', name: 'Dra. Elena Voss', role: 'Auditora Líder (ENAC/CCN)', class: 'auditor', mood: 'Profesional', stress: 'low', expertise: ['CCN-STIC-800', 'ISO 27001 Lead Auditor', 'Magerit v3'] },
-    auditor_tec: { id: 'auditor_tec', name: 'Ing. Yael Ben-Rubí', role: 'Auditor Técnico / Pentester', class: 'auditor', mood: 'Analítico', stress: 'low', expertise: ['OWASP', 'Análisis forense', 'Redes'] },
-    auditor_legal: { id: 'auditor_legal', name: 'Abg. Noa Shapira', role: 'Auditora Legal / Compliance', class: 'auditor', mood: 'Meticulosa', stress: 'low', expertise: ['RGPD', 'LOPDGDD', 'NIS2', 'Contratación'] },
-    ciso: { id: 'ciso', name: 'Carlos Mendoza', role: 'CISO (Responsable de Seguridad)', class: 'ciso', mood: 'Tenso', stress: 'med', expertise: ['Gestión de riesgos', 'Estrategia de seguridad'] },
-    cio: { id: 'cio', name: 'D. Roberto García', role: 'CIO (Director de Sistemas)', class: 'cio', mood: 'Defensivo', stress: 'med', expertise: ['Presupuesto TI', 'Uptime', 'Transformación digital'] },
-    dpo: { id: 'dpo', name: 'Abg. Marta Soler', role: 'Delegada de Protección de Datos', class: 'dpo', mood: 'Cauta', stress: 'med', expertise: ['Evaluaciones de Impacto (EIPD)', 'Brechas RGPD'] },
-    sysadmin: { id: 'sysadmin', name: 'Javier Ruiz', role: 'Administrador de Sistemas Senior', class: 'sysadmin', mood: 'Estresado', stress: 'high', expertise: ['Windows/Linux', 'Active Directory', 'Parcheo'] },
-    legal: { id: 'legal', name: 'Dña. Carmen Vega', role: 'Directora Jurídica', class: 'legal', mood: 'Preocupada', stress: 'med', expertise: ['Sanciones AEPD', 'Cláusulas contractuales', 'NIS2 Art. 23'] },
-    provider: { id: 'provider', name: 'CloudGov S.L. (Representante)', role: 'Proveedor de Servicios Esenciales', class: 'sysadmin', mood: 'Corporativo', stress: 'low', expertise: ['Certificación ENS Cloud', 'SLA'] },
-    csirt: { id: 'csirt', name: 'Equipo CCN-CERT / CSIRT Interno', role: 'Respuesta a Incidentes', class: 'auditor', mood: 'Alerta', stress: 'high', expertise: ['Threat Intelligence', 'Contención', 'Forense'] }
+    auditor_lider: { id: 'auditor_lider', name: 'Dra. Elena Voss', role: 'Auditora Líder (ENAC/CCN)', class: 'auditor', mood: 'Profesional', stress: 'low' },
+    auditor_tec: { id: 'auditor_tec', name: 'Ing. Yael Ben-Rubí', role: 'Auditor Técnico / Pentester', class: 'auditor', mood: 'Analítico', stress: 'low' },
+    auditor_legal: { id: 'auditor_legal', name: 'Abg. Noa Shapira', role: 'Auditora Legal / Compliance', class: 'auditor', mood: 'Meticulosa', stress: 'low' },
+    ciso: { id: 'ciso', name: 'Carlos Mendoza', role: 'CISO (Responsable de Seguridad)', class: 'ciso', mood: 'Tenso', stress: 'med' },
+    cio: { id: 'cio', name: 'D. Roberto García', role: 'CIO (Director de Sistemas)', class: 'cio', mood: 'Defensivo', stress: 'med' },
+    dpo: { id: 'dpo', name: 'Abg. Marta Soler', role: 'Delegada de Protección de Datos', class: 'dpo', mood: 'Cauta', stress: 'med' },
+    sysadmin: { id: 'sysadmin', name: 'Javier Ruiz', role: 'Administrador de Sistemas Senior', class: 'sysadmin', mood: 'Estresado', stress: 'high' },
+    legal: { id: 'legal', name: 'Dña. Carmen Vega', role: 'Directora Jurídica', class: 'legal', mood: 'Preocupada', stress: 'med' },
+    provider: { id: 'provider', name: 'CloudGov S.L. (Representante)', role: 'Proveedor de Servicios', class: 'sysadmin', mood: 'Corporativo', stress: 'low' },
+    csirt: { id: 'csirt', name: 'Equipo CCN-CERT / CSIRT', role: 'Respuesta a Incidentes', class: 'auditor', mood: 'Alerta', stress: 'high' }
 };
 
-// Controles ENS con mapeo a ISO 27001:2022 y NIS2
 const CONTROLS = [
     { code: 'MP.info.1', family: 'MP', name: 'Inventario y clasificación de activos', level: 'baja', iso: 'A.5.9', nis2: 'Art. 21.2.a' },
     { code: 'MP.com.2', family: 'MP', name: 'Cifrado de comunicaciones (TLS 1.3)', level: 'alta', iso: 'A.8.24', nis2: 'Art. 21.2.b' },
@@ -532,11 +597,11 @@ const CONTROLS = [
 ];
 
 const ASSETS = [
-    { id: 'A-001', name: 'Core Banking / Sistema Crítico', type: 'Aplicación', crit: 'alta', owner: 'CIO', location: 'CPD Principal' },
-    { id: 'A-002', name: 'Base de Datos de Clientes (PII)', type: 'BBDD', crit: 'alta', owner: 'DPO', location: 'CPD Principal' },
-    { id: 'A-003', name: 'Firewall de Nueva Generación', type: 'Red', crit: 'alta', owner: 'SysAdmin', location: 'Perímetro' },
-    { id: 'A-004', name: 'Servidores Legacy (Windows 2012)', type: 'Servidor', crit: 'media', owner: 'SysAdmin', location: 'CPD Secundario' },
-    { id: 'A-005', name: 'Plataforma Cloud (Proveedor Externo)', type: 'Servicio', crit: 'alta', owner: 'CISO', location: 'Externo' }
+    { id: 'A-001', name: 'Core Banking / Sistema Crítico', type: 'Aplicación', crit: 'alta', owner: 'CIO' },
+    { id: 'A-002', name: 'Base de Datos de Clientes (PII)', type: 'BBDD', crit: 'alta', owner: 'DPO' },
+    { id: 'A-003', name: 'Firewall de Nueva Generación', type: 'Red', crit: 'alta', owner: 'SysAdmin' },
+    { id: 'A-004', name: 'Servidores Legacy (Windows 2012)', type: 'Servidor', crit: 'media', owner: 'SysAdmin' },
+    { id: 'A-005', name: 'Plataforma Cloud (Proveedor Externo)', type: 'Servicio', crit: 'alta', owner: 'CISO' }
 ];
 
 const DOCS = [
@@ -551,106 +616,194 @@ const FINDINGS = [
     {
         code: 'NC-M-001', control: 'MP.com.2', severity: 'major', risk: { p: 4, i: 5 },
         title: 'Tráfico interno sensible sin cifrar (HTTP plano)',
-        description: 'Se ha detectado tráfico HTTP plano entre el frontend y la base de datos de clientes en la red interna. Contiene PII (DNI, datos financieros).',
-        remediation: 'Implementar mTLS (TLS 1.3) inmediatamente entre todos los microservicios. Deshabilitar HTTP en la configuración del balanceador.',
-        evidence: { file: 'captura_red_interna.pcap', hash: 'a3f5b8c2d1e9f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3', content: 'Frame 452: POST /api/v1/clientes HTTP/1.1\nHost: 10.20.30.50\nContent-Type: application/json\n\n{"dni": "12345678A", "saldo": 54000.50, "cvv": "123"}\n<span class="highlight">[!] DATOS SENSIBLES EN CLARO</span>' },
+        description: 'Tráfico HTTP plano entre frontend y BBDD de clientes en red interna. Contiene PII.',
+        remediation: 'Implementar mTLS (TLS 1.3) inmediatamente. Deshabilitar HTTP en el balanceador.',
+        evidence: { file: 'captura_red_interna.pcap', hash: 'a3f5b8c2d1e9f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3', content: 'Frame 452: POST /api/v1/clientes HTTP/1.1\nHost: 10.20.30.50\nContent-Type: application/json\n\n{"dni": "12345678A", "saldo": 54000.50}\n<span class="highlight">[!] DATOS SENSIBLES EN CLARO</span>' },
         dialogues: [
-            { actor: 'auditor_tec', text: 'He capturado tráfico en el segmento 10.20.30.0/24. Confirmado: HTTP plano con datos financieros. Esto es una No Conformidad Mayor inmediata.' },
+            { actor: 'auditor_tec', text: 'He capturado tráfico en el segmento 10.20.30.0/24. Confirmado: HTTP plano con datos financieros. No Conformidad Mayor inmediata.' },
             { actor: 'cio', text: 'Esa aplicación es heredada. El equipo de desarrollo dice que actualizarlo a HTTPS rompería la integración con el mainframe.' },
-            { actor: 'auditor_lider', text: 'La deuda técnica no justifica la exposición de datos. El ENS (MP.com.2) y el RGPD exigen cifrado. Es una No Conformidad Mayor.' },
+            { actor: 'auditor_lider', text: 'La deuda técnica no justifica la exposición de datos. El ENS (MP.com.2) y el RGPD exigen cifrado.' },
             { actor: 'dpo', text: 'Esto constituye una brecha de seguridad activa. Debemos evaluar la notificación a la AEPD en 72 horas.' }
         ]
     },
     {
         code: 'NC-M-002', control: 'MP.sistemas.2', severity: 'major', risk: { p: 5, i: 5 },
         title: 'Vulnerabilidades críticas sin parchear (CVEs > 9.0)',
-        description: '8 servidores expuestos a internet tienen vulnerabilidades críticas conocidas desde hace más de 120 días, superando el SLA de parcheo de 30 días.',
-        remediation: 'Parcheo urgente en ventana de 72h. Compensación temporal con reglas WAF específicas y segmentación de red hasta la verificación.',
-        evidence: { file: 'informe_nessus_critico.pdf', hash: '9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d', content: 'HOST: 10.20.30.110 (Windows Server 2012 R2)\nCVE-2023-12345 (CVSS 9.8): Remote Code Execution\nEstado: <span class="highlight">EXPLOTABLE</span>\nDías sin parche: 127\nRecomendación: Aplicar KB5034441 o aislar.' },
+        description: '8 servidores expuestos a internet tienen vulnerabilidades críticas conocidas desde hace más de 120 días.',
+        remediation: 'Parcheo urgente en 72h. Compensación temporal con reglas WAF y segmentación de red.',
+        evidence: { file: 'informe_nessus_critico.pdf', hash: '9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d', content: 'HOST: 10.20.30.110 (Windows Server 2012 R2)\nCVE-2023-12345 (CVSS 9.8): Remote Code Execution\nEstado: <span class="highlight">EXPLOTABLE</span>\nDías sin parche: 127' },
         dialogues: [
-            { actor: 'auditor_tec', text: 'El escaneo Nessus muestra 8 servidores con CVEs críticas explotables. Uno tiene una vulnerabilidad de ejecución remota de código.' },
-            { actor: 'sysadmin', text: 'Ese servidor no se puede reiniciar sin romper la aplicación de nóminas. El proveedor quebró y no hay soporte.' },
-            { actor: 'auditor_lider', text: 'MP.sistemas.2 es claro: 30 días máximo para críticos. La falta de soporte exige medidas compensatorias inmediatas (aislamiento).' },
-            { actor: 'ciso', text: 'Tiene razón. Aislaré ese segmento detrás del WAF hoy mismo y presentaré un plan de migración al CIO.' }
+            { actor: 'auditor_tec', text: 'El escaneo Nessus muestra 8 servidores con CVEs críticas explotables.' },
+            { actor: 'sysadmin', text: 'Ese servidor no se puede reiniciar sin romper la aplicación. El proveedor quebró y no hay soporte.' },
+            { actor: 'auditor_lider', text: 'MP.sistemas.2 es claro: 30 días máximo para críticos. La falta de soporte exige medidas compensatorias inmediatas.' },
+            { actor: 'ciso', text: 'Tiene razón. Aislaré ese segmento detrás del WAF hoy mismo y presentaré un plan de migración.' }
         ]
     },
     {
         code: 'NC-M-003', control: 'RC.inc.1', severity: 'major', risk: { p: 4, i: 5 },
         title: 'Fallo en la notificación de incidentes (Incumplimiento NIS2/RGPD)',
-        description: 'Se identificó un incidente de exfiltración de datos hace 4 meses que no fue notificado al CCN-CERT ni a la AEPD en el plazo legal de 72 horas.',
-        remediation: 'Revisar y probar el procedimiento de notificación. Establecer canales de comunicación directos con el CSIRT y la autoridad de control.',
-        evidence: { file: 'registro_incidencias_interno.xlsx', hash: 'f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4', content: 'ID: INC-2025-089\nFecha: 15/02/2025\nDescripción: <span class="highlight">Exfiltración de 5000 registros de clientes</span>\nAcción tomada: "Se resetearon contraseñas".\nNotificación AEPD/CCN: <span class="highlight">NO</span>\nMotivo: "Se consideró riesgo bajo por el CISO".' },
+        description: 'Incidente de exfiltración de datos hace 4 meses no notificado al CCN-CERT ni a la AEPD en 72 horas.',
+        remediation: 'Revisar y probar el procedimiento de notificación. Establecer canales directos con el CSIRT.',
+        evidence: { file: 'registro_incidencias_interno.xlsx', hash: 'f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4', content: 'ID: INC-2025-089\nFecha: 15/02/2025\nDescripción: <span class="highlight">Exfiltración de 5000 registros</span>\nNotificación AEPD/CCN: <span class="highlight">NO</span>\nMotivo: "Se consideró riesgo bajo por el CISO".' },
         dialogues: [
-            { actor: 'auditor_legal', text: 'He cruzado el registro interno de incidentes con las notificaciones de la AEPD. Hay un incidente de febrero sin notificar.' },
-            { actor: 'ciso', text: 'En aquel momento evaluamos que el riesgo para los derechos de los interesados era bajo. No queríamos causar alarma innecesaria.' },
-            { actor: 'auditor_lider', text: 'La evaluación de riesgo no la puede hacer el CISO unilateralmente sin documentar una EIPD. Esto incumple el Art. 23 de NIS2 y el RGPD. No Conformidad Mayor.' },
-            { actor: 'legal', text: 'Esto podría acarrear una sanción de hasta el 2% de la facturación global bajo NIS2. Debemos regularizar esto ya.' }
+            { actor: 'auditor_legal', text: 'He cruzado el registro interno con las notificaciones de la AEPD. Hay un incidente de febrero sin notificar.' },
+            { actor: 'ciso', text: 'En aquel momento evaluamos que el riesgo para los interesados era bajo. No queríamos causar alarma.' },
+            { actor: 'auditor_lider', text: 'La evaluación de riesgo no la puede hacer el CISO unilateralmente sin una EIPD. Incumple el Art. 23 de NIS2.' },
+            { actor: 'legal', text: 'Esto podría acarrear una sanción de hasta el 2% de la facturación global bajo NIS2.' }
         ]
     },
     {
         code: 'NC-m-004', control: 'OP.adq.1', severity: 'minor', risk: { p: 3, i: 3 },
         title: 'Cadena de suministro: Cláusulas de seguridad insuficientes',
-        description: 'El contrato con el proveedor Cloud no incluye el derecho de auditoría por parte del ENS ni especifica la jurisdicción de los datos.',
-        remediation: 'Negociar un anexo de seguridad con el proveedor que incluya certificación ENS, derecho de auditoría y ubicación de datos en la UE.',
-        evidence: { file: 'contrato_cloudgov_v1.5.pdf', hash: 'e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6', content: 'CLÁUSULA 8.2: El Proveedor se compromete a mantener estándares de seguridad.\n<span class="highlight">CLÁUSULA 8.3: El Cliente renuncia a cualquier derecho de auditoría directa sobre las instalaciones del Proveedor.</span>\nCLÁUSULA 9.1: Los datos podrán ser replicados en centros de datos de EE.UU.' },
+        description: 'El contrato con el proveedor Cloud no incluye el derecho de auditoría por parte del ENS.',
+        remediation: 'Negociar un anexo de seguridad con derecho de auditoría y ubicación de datos en la UE.',
+        evidence: { file: 'contrato_cloudgov_v1.5.pdf', hash: 'e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6', content: 'CLÁUSULA 8.3: El Cliente renuncia a cualquier derecho de auditoría directa sobre las instalaciones del Proveedor.\nCLÁUSULA 9.1: Los datos podrán ser replicados en centros de datos de EE.UU.' },
         dialogues: [
-            { actor: 'auditor_legal', text: 'El contrato con CloudGov renuncia explícitamente al derecho de auditoría y permite la replicación de datos fuera de la UE.' },
-            { actor: 'provider', text: 'Nuestra plataforma está certificada en ISO 27001 y SOC 2. Nuestras políticas de seguridad son estándar y no negociables.' },
-            { actor: 'auditor_lider', text: 'Para un sistema de categoría Alta, el ENS exige garantías adicionales y derecho de auditoría (OP.adq.1). Es una No Conformidad Menor que debe corregirse en la renovación.' }
+            { actor: 'auditor_legal', text: 'El contrato con CloudGov renuncia explícitamente al derecho de auditoría y permite replicación fuera de la UE.' },
+            { actor: 'provider', text: 'Nuestra plataforma está certificada en ISO 27001. Nuestras políticas de seguridad son estándar y no negociables.' },
+            { actor: 'auditor_lider', text: 'Para un sistema de categoría Alta, el ENS exige garantías adicionales y derecho de auditoría (OP.adq.1).' }
         ]
     },
     {
         code: 'OBS-001', control: 'CP.pb.1', severity: 'observation', risk: { p: 2, i: 4 },
         title: 'Plan de Continuidad sin simulacros recientes',
-        description: 'El BCP está documentado, pero no se ha ejecutado un simulacro de recuperación ante desastres en los últimos 24 meses.',
-        remediation: 'Planificar y ejecutar un simulacro de recuperación en los próximos 6 meses, documentando lecciones aprendidas.',
-        evidence: { file: 'registro_simulacros.pdf', hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2', content: 'Último simulacro registrado: 10/03/2023.\nResultado: RTO cumplido (4h), RPO excedido (6h vs 2h declarados).\nAcciones pendientes: Actualizar scripts de restauración de BBDD.\nEstado: <span class="highlight">PENDIENTE</span>' },
+        description: 'El BCP está documentado, pero no se ha ejecutado un simulacro de recuperación en 24 meses.',
+        remediation: 'Planificar y ejecutar un simulacro de recuperación en los próximos 6 meses.',
+        evidence: { file: 'registro_simulacros.pdf', hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2', content: 'Último simulacro: 10/03/2023.\nResultado: RTO cumplido (4h), RPO excedido (6h vs 2h).\nEstado: <span class="highlight">PENDIENTE</span>' },
         dialogues: [
             { actor: 'auditor_lider', text: 'Veo que el último simulacro fue en 2023. ¿Por qué no se ha repetido este año?' },
-            { actor: 'cio', text: 'El presupuesto de este año se destinó a la migración a la nube. Los simulacros son costosos en horas hombre.' },
-            { actor: 'auditor_lider', text: 'CP.ej.1 recomienda simulacros anuales. Sin probarlo, el plan es solo teoría. Lo registro como Observación.' }
+            { actor: 'cio', text: 'El presupuesto se destinó a la migración a la nube. Los simulacros son costosos en horas hombre.' },
+            { actor: 'auditor_lider', text: 'CP.ej.1 recomienda simulacros anuales. Sin probarlo, el plan es solo teoría. Observación.' }
         ]
     },
     {
         code: 'FORT-001', control: 'RC.inc.1', severity: 'strength', risk: { p: 1, i: 1 },
         title: 'Capacidad de respuesta a incidentes madura (CSIRT)',
-        description: 'El equipo CSIRT interno demuestra procedimientos excelentes, con tiempos de contención (MTTC) por debajo de 1 hora.',
-        remediation: 'Mantener y documentar estas prácticas como referencia para otros departamentos.',
-        evidence: { file: 'metricas_csirt_2025.pdf', hash: 'd0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1', content: 'MTTD (Detección): 12 minutos.\nMTTC (Contención): 45 minutos.\nIncidentes gestionados en 2025: 45.\nTasa de falsos positivos: < 5%.\nEvaluación: <span class="highlight">EXCELENTE</span>' },
+        description: 'El equipo CSIRT interno demuestra procedimientos excelentes, con MTTC por debajo de 1 hora.',
+        remediation: 'Mantener y documentar estas prácticas como referencia.',
+        evidence: { file: 'metricas_csirt_2025.pdf', hash: 'd0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1', content: 'MTTD (Detección): 12 minutos.\nMTTC (Contención): 45 minutos.\nEvaluación: <span class="highlight">EXCELENTE</span>' },
         dialogues: [
-            { actor: 'auditor_tec', text: 'Debo reconocer que los tiempos de respuesta del CSIRT son excepcionales. La contención del último incidente de ransomware fue impecable.' },
-            { actor: 'auditor_lider', text: 'Registrado como Fortaleza. Es un ejemplo de buena práctica en el dominio de Reacciones (RC).' }
+            { actor: 'auditor_tec', text: 'Debo reconocer que los tiempos de respuesta del CSIRT son excepcionales.' },
+            { actor: 'auditor_lider', text: 'Registrado como Fortaleza. Es un ejemplo de buena práctica en Reacciones (RC).' }
         ]
     }
 ];
 
 const DECISIONS = [
     {
-        question: 'El CIO argumenta que parchear el servidor crítico (NC-M-002) detendrá la producción durante 4 horas. ¿Cómo procedes?',
+        question: 'El CIO argumenta que parchear el servidor crítico (NC-M-002) detendrá la producción 4 horas. ¿Cómo procedes?',
         options: [
-            { text: 'Exigir el parcheo inmediato: la seguridad no es negociable.', effect: 'hostile', score: -5, response: 'cio', responseText: 'Esto es una intromisión en la operación. Asumo la responsabilidad del paro, pero lo anotaré en mi informe de queja.', moodChange: { cio: 'enfurecido', sysadmin: 'estresado' } },
-            { text: 'Aceptar medidas compensatorias: aislar el servidor tras el WAF y planificar parche en ventana de mantenimiento.', effect: 'neutral', score: 15, response: 'auditor_lider', responseText: 'Acepto el aislamiento inmediato como medida compensatoria (MP.sistemas.2), pero el parche debe programarse en la próxima ventana, máximo 7 días.', moodChange: { cio: 'aliviado', ciso: 'profesional' } },
-            { text: 'Cerrar el hallazgo sin más acción: la operación es prioritaria.', effect: 'soft', score: -20, response: 'ciso', responseText: 'Gracias por la comprensión. Lo revisaremos "cuando sea posible".', moodChange: { ciso: 'negligente' } }
+            { text: 'Exigir parcheo inmediato: la seguridad no es negociable.', effect: 'hostile', score: -5, response: 'cio', responseText: 'Esto es una intromisión en la operación. Asumo la responsabilidad del paro, pero lo anotaré en mi queja.', moodChange: { cio: 'high', sysadmin: 'high' } },
+            { text: 'Aceptar medidas compensatorias: aislar tras WAF y planificar parche en ventana de mantenimiento.', effect: 'neutral', score: 15, response: 'auditor_lider', responseText: 'Acepto el aislamiento inmediato como medida compensatoria, pero el parche debe programarse en 7 días máximo.', moodChange: { cio: 'low', ciso: 'low' } },
+            { text: 'Cerrar el hallazgo sin más acción: la operación es prioritaria.', effect: 'soft', score: -20, response: 'ciso', responseText: 'Gracias por la comprensión. Lo revisaremos "cuando sea posible".', moodChange: { ciso: 'high' } }
         ]
     },
     {
         question: 'El DPO insiste en notificar a la AEPD sobre el incidente antiguo (NC-M-003) ahora, fuera de plazo. ¿Qué haces?',
         options: [
-            { text: 'Apoyar la notificación tardía: es mejor tarde que nunca y demuestra buena fe.', effect: 'rgpd', score: 10, response: 'dpo', responseText: 'Procedo a redactar la notificación explicando las causas del retraso. La transparencia mitigará la sanción.', moodChange: { dpo: 'profesional', legal: 'preocupado' } },
-            { text: 'Oponerse: notificar ahora solo atraerá una inspección y una multa segura.', effect: 'wait', score: -15, response: 'auditor_legal', responseText: 'Como auditor, debo advertir que ocultarlo es peor. Si el CCN-CERT se entera por otra vía, la sanción NIS2 será máxima.', moodChange: { legal: 'tenso' } }
+            { text: 'Apoyar la notificación tardía: demuestra buena fe y transparencia.', effect: 'rgpd', score: 10, response: 'dpo', responseText: 'Procedo a redactar la notificación explicando las causas del retraso. La transparencia mitigará la sanción.', moodChange: { dpo: 'low', legal: 'med' } },
+            { text: 'Oponerse: notificar ahora solo atraerá una inspección y multa segura.', effect: 'wait', score: -15, response: 'auditor_legal', responseText: 'Como auditor, advierto que ocultarlo es peor. Si el CCN-CERT se entera, la sanción NIS2 será máxima.', moodChange: { legal: 'high' } }
         ]
     },
     {
         question: 'Detectas un intento de escaneo de puertos activo desde una IP externa durante la auditoría (Modo Caos).',
         options: [
-            { text: 'Suspender la auditoría y activar el protocolo de incidente (RC.inc.1).', effect: 'suspend', score: 20, response: 'csirt', responseText: 'CSIRT activado. Aislamos el perímetro. Auditor, le daremos acceso a los logs de contención en 1 hora.', moodChange: { csirt: 'alerta máxima' } },
-            { text: 'Ignorarlo, probablemente sea un escaneo rutinario de Internet.', effect: 'continue', score: -25, response: 'auditor_lider', responseText: 'Como auditor, no puedo ignorar una amenaza activa. Documentaré esta inacción como una falta grave en Reacciones.', moodChange: { csirt: 'frustrado' } }
+            { text: 'Suspender la auditoría y activar el protocolo de incidente (RC.inc.1).', effect: 'suspend', score: 20, response: 'csirt', responseText: 'CSIRT activado. Aislamos el perímetro. Auditor, le daremos acceso a los logs de contención en 1 hora.', moodChange: { csirt: 'high' } },
+            { text: 'Ignorarlo, probablemente sea un escaneo rutinario de Internet.', effect: 'continue', score: -25, response: 'auditor_lider', responseText: 'Como auditor, no puedo ignorar una amenaza activa. Documentaré esta inacción como falta grave.', moodChange: { csirt: 'high' } }
         ]
     }
 ];
 
+const COMMANDS = {
+    ayuda: () => `COMANDOS DISPONIBLES:
+  ayuda              - Muestra esta ayuda
+  estado             - Estado actual de la auditoría
+  actores            - Lista actores presentes y su nivel de estrés
+  hallazgos          - Lista hallazgos detectados hasta ahora
+  controles [fam]    - Lista controles (MP, OR, OP, CP, PT, RC)
+  evidencia [cod]    - Muestra evidencia de un hallazgo (ej: evidencia NC-M-001)
+  riesgo             - Resumen de la matriz de riesgos Magerit
+  metricas           - Métricas de madurez por dominio
+  escanear [obj]     - Simula escaneo de vulnerabilidades (Nessus)
+  nmap [ip]          - Simula escaneo de puertos de red
+  leer_psi           - Analiza la Política de Seguridad de la Información
+  analizar_contrato  - Revisa cláusulas críticas de proveedores
+  forense            - Inicia análisis forense digital básico
+  limpiar            - Limpia la pantalla de la terminal`,
+    estado: () => !state.running ? '⚠ Auditoría no iniciada.' : `ESTADO DE LA AUDITORÍA\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOrganismo: ${state.org.name}\nCategoría: ${state.category.toUpperCase()} | Dificultad: ${state.difficulty}\nFase actual: ${['PRE-AUDITORÍA','PLANIFICACIÓN','EJECUCIÓN','INFORME','SEGUIMIENTO'][state.phase]}\nHallazgos: ${state.findings.length} | Evidencias: ${state.evidences.length}\nPuntuación: ${state.score} | Tiempo: ${document.getElementById('s-time').textContent}`,
+    actores: () => state.currentActors.length ? state.currentActors.map(a => `• ${a.name} (${a.role}) - Estrés: ${a.stress.toUpperCase()}`).join('\n') : 'No hay actores en escena.',
+    hallazgos: () => state.findings.length ? state.findings.map(f => `[${f.severity.toUpperCase()}] ${f.code}: ${f.title}`).join('\n') : 'No hay hallazgos detectados aún.',
+    controles: (args) => {
+        const fam = (args[0] || '').toUpperCase();
+        const filtered = fam ? CONTROLS.filter(c => c.family === fam) : CONTROLS;
+        return filtered.map(c => `${c.code.padEnd(10)} [${c.level.toUpperCase().padEnd(5)}] ${c.name} (ISO: ${c.iso || '-'})`).join('\n');
+    },
+    evidencia: (args) => {
+        const code = args[0];
+        if (!code) return 'Uso: evidencia <código_hallazgo> (ej: evidencia NC-M-001)';
+        const f = state.findings.find(x => x.code === code);
+        if (!f) return `Hallazgo ${code} no encontrado.`;
+        if (!f.evidence) return 'Sin evidencia asociada a este hallazgo.';
+        return `EVIDENCIA: ${f.evidence.file}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${f.evidence.content}\n\nSHA-256: ${f.evidence.hash}`;
+    },
+    riesgo: () => {
+        if (!state.findings.length) return 'No hay hallazgos para calcular riesgos.';
+        let out = 'MATRIZ DE RIESGOS (MAGERIT v3)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+        state.findings.forEach(f => {
+            if (f.risk) {
+                const level = f.risk.p * f.risk.i;
+                const cat = level >= 15 ? 'EXTREMO' : level >= 9 ? 'ALTO' : level >= 4 ? 'MEDIO' : 'BAJO';
+                out += `${f.code.padEnd(12)} P:${f.risk.p} × I:${f.risk.i} = ${level.toString().padEnd(3)} [${cat}]\n`;
+            }
+        });
+        return out;
+    },
+    metricas: () => Object.keys(state.metrics).map(f => `${f.padEnd(3)}: ${state.metrics[f].toString().padStart(3)}% ${'█'.repeat(Math.floor(state.metrics[f]/5))}${'░'.repeat(20-Math.floor(state.metrics[f]/5))}`).join('\n'),
+    escanear: (args) => {
+        if (!state.running) return '⚠ Inicia la auditoría primero.';
+        return `[*] Iniciando escaneo de vulnerabilidades con motor Nessus...\n[*] Objetivo: ${args[0] || 'red_interna'}\n[+] Escaneo completado en 47:23 minutos\n[!] Vulnerabilidades encontradas: ${Math.floor(Math.random() * 6) + 2}\n    • Críticas (CVSS 9.0-10.0): ${Math.floor(Math.random() * 2)}\n    • Altas (CVSS 7.0-8.9): ${Math.floor(Math.random() * 3)}\n[+] Informe generado: escaneo_${Date.now()}.pdf`,
+    nmap: (args) => `Iniciando Nmap 7.94 ( https://nmap.org )\nExplorando ${args[0] || '10.20.30.0/24'}\nDescubrimiento de hosts: 5 hosts activos\nPUERTO     ESTADO SERVICIO       VERSIÓN\n22/tcp     abierto ssh           OpenSSH 8.9\n80/tcp     abierto http          Apache 2.4.57\n443/tcp    abierto https         nginx 1.25.3\n3389/tcp   abierto ms-wbt-server Microsoft Terminal Services\n[!] 1 servicio no estándar detectado en puerto 8080.`,
+    leer_psi: () => `ANÁLISIS DE DOCUMENTO: PSI\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✓ Documento existe y está firmado por el Órgano Superior.\n⚠ ADVERTENCIA: La fecha de última revisión es de hace 18 meses (supera el ciclo anual recomendado por OR.pol.1).\n⚠ ADVERTENCIA: No se mencionan explícitamente los requisitos de la directiva NIS2 en la sección de gobernanza.\nRecomendación: Solicitar actualización inmediata.`,
+    analizar_contrato: () => `ANÁLISIS DE CONTRATO DE PROVEEDOR\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚠ CLÁUSULA CRÍTICA DETECTADA: Renuncia al derecho de auditoría por parte del cliente.\n⚠ CLÁUSULA CRÍTICA DETECTADA: Permite la replicación de datos fuera del Espacio Económico Europeo (EEE).\nCumplimiento OP.adq.1: NO CONFORME.\nCumplimiento RGPD (Transferencias internacionales): EN RIESGO.`,
+    forense: () => `ANÁLISIS FORENSE DIGITAL (BÁSICO)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[*] Adquisición de evidencia en progreso...\n[+] Imagen de disco adquirida. Hash SHA-256 verificado.\n[*] Análisis de registros del sistema...\n[!] Intentos de acceso fallidos: ${Math.floor(Math.random()*500)+100}\n[!] Conexiones sospechosas detectadas: ${Math.floor(Math.random()*5)+1}\n[+] Se recomienda profundizar con herramientas de memoria (Volatility).`,
+    limpiar: () => { document.getElementById('term-out').innerHTML = ''; return ''; }
+};
+
+const CHAT_RESPONSES = {
+    auditor_lider: {
+        greetings: ['Buenos días. Estoy coordinando el alcance de la auditoría. ¿En qué puedo orientarle?'],
+        findings: ['Los hallazgos se documentan según CCN-STIC-800. Cada uno debe tener evidencia objetiva y mapeo al control.', 'Las No Conformidades Mayores bloquean la certificación hasta su remediación o aceptación de riesgo por el Órgano Superior.'],
+        default: ['Interesante punto. Lo anotaré en mis observaciones para el informe final.', 'Ese aspecto requiere una revisión más profunda de la documentación.']
+    },
+    ciso: {
+        greetings: ['Bienvenido. Tenemos toda la documentación preparada en el repositorio seguro.'],
+        defensive: ['Ese hallazgo tiene un contexto que no se ve en el papel. Tenemos limitaciones presupuestarias históricas.', 'Entiendo el requisito, pero la implementación técnica es más compleja de lo que parece.'],
+        default: ['Déjeme consultar ese dato concreto con mi equipo técnico y le respondo en breve.', 'Podemos aportar esa evidencia, pero necesitamos 24 horas para compilarla.']
+    },
+    cio: {
+        greetings: ['Espero que esta auditoría no interrumpa la operación normal del negocio.'],
+        defensive: ['La seguridad es importante, pero no podemos permitirnos paradas de producción por parches no probados.', 'El presupuesto de TI ya está ejecutado al 95%. No hay margen para nuevas herramientas este año.'],
+        default: ['Eso es una decisión operativa que debe evaluar el CISO.', 'Necesito ver el impacto en el SLA antes de aprobar cualquier cambio.']
+    },
+    dpo: {
+        greetings: ['Como DPO, mi prioridad es garantizar el cumplimiento del RGPD y la LOPDGDD.'],
+        rgpd: ['Cualquier hallazgo que implique datos personales debe evaluarse inmediatamente como posible brecha de seguridad.', 'La AEPD espera notificación en 72 horas. No hay excusas válidas para el retraso.'],
+        default: ['Ese aspecto tiene implicaciones de privacidad. Revisaré la Evaluación de Impacto (EIPD).', 'Necesito asegurarme de que el registro de actividades de tratamiento esté actualizado.']
+    },
+    sysadmin: {
+        greetings: ['Hola. Estoy un poco saturado, pero intentaré ayudar en lo que pueda.'],
+        technical: ['Ese servidor es heredado (legacy). Si lo tocamos, probablemente se caerá el servicio.', 'El problema no es la voluntad, es que no tenemos personal suficiente para mantener el ritmo de parcheo.'],
+        default: ['Tendría que mirar los logs concretos para confirmarle eso.', 'Esa configuración la heredé de mi predecesor, no sé por qué se hizo así.']
+    },
+    legal: {
+        greetings: ['Buenos días. Estoy revisando las implicaciones contractuales y regulatorias.'],
+        rgpd: ['Bajo NIS2, las sanciones por no notificar incidentes pueden llegar al 2% de la facturación global anual. Es un riesgo material.'],
+        default: ['Ese punto debe ser revisado por la dirección jurídica antes de comprometer a la organización.', 'Necesito ver la redacción exacta de esa cláusula contractual.']
+    }
+};
+
 // ============================================================
-// ESTADO GLOBAL
+// 4. ESTADO GLOBAL
 // ============================================================
 let state = {
     running: false,
@@ -663,7 +816,7 @@ let state = {
 };
 
 // ============================================================
-// FUNCIONES DE INTERFAZ Y LÓGICA
+// 5. FUNCIONES DE INTERFAZ Y LÓGICA
 // ============================================================
 function log(actorClass, actorName, text, type = '') {
     const now = new Date();
@@ -699,18 +852,21 @@ function setPhase(n) {
     state.phase = n;
     for (let i = 1; i <= 4; i++) {
         const el = document.getElementById(`ph-${i}`);
-        el.classList.remove('active', 'done');
-        if (i < n) el.classList.add('done');
-        else if (i === n) el.classList.add('active');
+        if(el) {
+            el.classList.remove('active', 'done');
+            if (i < n) el.classList.add('done');
+            else if (i === n) el.classList.add('active');
+        }
     }
     const phases = ['PRE-AUDITORÍA', 'PLANIFICACIÓN', 'EJECUCIÓN', 'INFORME', 'SEGUIMIENTO'];
     document.getElementById('h-phase').textContent = phases[n] || 'PRE-AUDITORÍA';
-    addTimeline(`FASE: ${phases[n]}`, `Cambio a fase ${n}. Revisa la Guía del Auditor para los siguientes pasos.`, 'info');
+    addTimeline(`FASE: ${phases[n]}`, `Cambio a fase ${n}. Revisa la Guía del Auditor.`, 'info');
     updateGuide(n);
 }
 
 function updateGuide(phase) {
     const guide = document.getElementById('guide-box');
+    if(!guide) return;
     const tips = [
         "<strong>Fase 1: Planificación.</strong> Tu objetivo es entender el alcance. Revisa la PSI (OR.pol.1) y el inventario de activos. Usa el comando <code>leer_psi</code> en la terminal.",
         "<strong>Fase 2: Ejecución.</strong> Es el momento de la verdad. Interroga a los actores, solicita evidencias (<code>🔍 EVIDENCIA</code>) y usa la terminal para escaneos (<code>escanear</code>, <code>nmap</code>). Detecta las No Conformidades.",
@@ -745,6 +901,7 @@ function updateMetrics() {
 
 function drawRadar() {
     const svg = document.getElementById('radar');
+    if(!svg) return;
     const cx = 100, cy = 75, rMax = 55;
     const families = ['MP', 'OR', 'OP', 'CP', 'PT', 'RC'];
     const n = families.length;
@@ -769,7 +926,7 @@ function drawRadar() {
     }
     let dataPoints = [];
     for (let i = 0; i < n; i++) {
-        const val = state.metrics[families[i]] / 100;
+        const val = (state.metrics[families[i]] || 0) / 100;
         const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
         dataPoints.push(`${cx + rMax * val * Math.cos(angle)},${cy + rMax * val * Math.sin(angle)}`);
     }
@@ -783,6 +940,7 @@ function drawRadar() {
 
 function buildChecklist() {
     const cont = document.getElementById('check-cont');
+    if(!cont) return;
     cont.innerHTML = '';
     const families = { 'MP': 'PROTECCIÓN', 'OR': 'ORGANIZACIÓN', 'OP': 'OPERACIÓN', 'CP': 'CONTINUIDAD', 'PT': 'PROTECCIÓN FÍSICA', 'RC': 'REACCIONES' };
     Object.keys(families).forEach(fam => {
@@ -841,6 +999,7 @@ function showControlDetail(control) {
 
 function buildRiskMatrix() {
     const matrix = document.getElementById('risk-matrix');
+    if(!matrix) return;
     matrix.innerHTML = '';
     for (let i = 5; i >= 1; i--) {
         const label = document.createElement('div');
@@ -865,7 +1024,7 @@ function buildRiskMatrix() {
                     const dot = document.createElement('div');
                     dot.className = 'risk-dot';
                     dot.title = `${f.code}: ${f.title}`;
-                    dot.onclick = () => showFindingDetail(f);
+                    dot.onclick = (e) => { e.stopPropagation(); showFindingDetail(f); };
                     cell.appendChild(dot);
                 }
             });
@@ -911,6 +1070,7 @@ function showFindingDetail(finding) {
 
 function renderActors() {
     const cont = document.getElementById('actors-list');
+    if(!cont) return;
     cont.innerHTML = '';
     state.currentActors.forEach(a => {
         const div = document.createElement('div');
@@ -1035,7 +1195,7 @@ function takeDecision(decision, idx) {
         }
         if (opt.moodChange) {
             Object.keys(opt.moodChange).forEach(actorId => {
-                updateActorStress(actorId, opt.moodChange[actorId] === 'enfurecido' ? 'high' : opt.moodChange[actorId] === 'aliviado' ? 'low' : 'med');
+                updateActorStress(actorId, opt.moodChange[actorId]);
             });
         }
     }, 1500);
@@ -1075,41 +1235,8 @@ function checkAchievements() {
 }
 
 // ============================================================
-// CHAT INTELIGENTE
+// 6. CHAT Y TERMINAL
 // ============================================================
-const CHAT_RESPONSES = {
-    auditor_lider: {
-        greetings: ['Buenos días. Estoy coordinando el alcance de la auditoría. ¿En qué puedo orientarle?'],
-        findings: ['Los hallazgos se documentan según CCN-STIC-800. Cada uno debe tener evidencia objetiva y mapeo al control.', 'Las No Conformidades Mayores bloquean la certificación hasta su remediación o aceptación de riesgo por el Órgano Superior.'],
-        default: ['Interesante punto. Lo anotaré en mis observaciones para el informe final.', 'Ese aspecto requiere una revisión más profunda de la documentación.']
-    },
-    ciso: {
-        greetings: ['Bienvenido. Tenemos toda la documentación preparada en el repositorio seguro.'],
-        defensive: ['Ese hallazgo tiene un contexto que no se ve en el papel. Tenemos limitaciones presupuestarias históricas.', 'Entiendo el requisito, pero la implementación técnica es más compleja de lo que parece.'],
-        default: ['Déjeme consultar ese dato concreto con mi equipo técnico y le respondo en breve.', 'Podemos aportar esa evidencia, pero necesitamos 24 horas para compilarla.']
-    },
-    cio: {
-        greetings: ['Espero que esta auditoría no interrumpa la operación normal del negocio.'],
-        defensive: ['La seguridad es importante, pero no podemos permitirnos paradas de producción por parches no probados.', 'El presupuesto de TI ya está ejecutado al 95%. No hay margen para nuevas herramientas este año.'],
-        default: ['Eso es una decisión operativa que debe evaluar el CISO.', 'Necesito ver el impacto en el SLA antes de aprobar cualquier cambio.']
-    },
-    dpo: {
-        greetings: ['Como DPO, mi prioridad es garantizar el cumplimiento del RGPD y la LOPDGDD.'],
-        rgpd: ['Cualquier hallazgo que implique datos personales debe evaluarse inmediatamente como posible brecha de seguridad.', 'La AEPD espera notificación en 72 horas. No hay excusas válidas para el retraso.'],
-        default: ['Ese aspecto tiene implicaciones de privacidad. Revisaré la Evaluación de Impacto (EIPD).', 'Necesito asegurarme de que el registro de actividades de tratamiento esté actualizado.']
-    },
-    sysadmin: {
-        greetings: ['Hola. Estoy un poco saturado, pero intentaré ayudar en lo que pueda.'],
-        technical: ['Ese servidor es heredado (legacy). Si lo tocamos, probablemente se caerá el servicio.', 'El problema no es la voluntad, es que no tenemos personal suficiente para mantener el ritmo de parcheo.'],
-        default: ['Tendría que mirar los logs concretos para confirmarle eso.', 'Esa configuración la heredé de mi predecesor, no sé por qué se hizo así.']
-    },
-    legal: {
-        greetings: ['Buenos días. Estoy revisando las implicaciones contractuales y regulatorias.'],
-        rgpd: ['Bajo NIS2, las sanciones por no notificar incidentes pueden llegar al 2% de la facturación global anual. Es un riesgo material.'],
-        default: ['Ese punto debe ser revisado por la dirección jurídica antes de comprometer a la organización.', 'Necesito ver la redacción exacta de esa cláusula contractual.']
-    }
-};
-
 function sendChat() {
     const input = document.getElementById('chat-input');
     const target = document.getElementById('chat-target').value;
@@ -1151,103 +1278,6 @@ function sendChat() {
     cont.scrollTop = cont.scrollHeight;
 }
 
-// ============================================================
-// TERMINAL PROFESIONAL
-// ============================================================
-const COMMANDS = {
-    ayuda: () => `COMANDOS DISPONIBLES:
-  ayuda              - Muestra esta ayuda
-  estado             - Estado actual de la auditoría
-  actores            - Lista actores presentes y su nivel de estrés
-  hallazgos          - Lista hallazgos detectados hasta ahora
-  controles [fam]    - Lista controles (MP, OR, OP, CP, PT, RC)
-  evidencia [cod]    - Muestra evidencia de un hallazgo (ej: evidencia NC-M-001)
-  riesgo             - Resumen de la matriz de riesgos Magerit
-  metricas           - Métricas de madurez por dominio
-  escanear [obj]     - Simula escaneo de vulnerabilidades (Nessus)
-  nmap [ip]          - Simula escaneo de puertos de red
-  leer_psi           - Analiza la Política de Seguridad de la Información
-  analizar_contrato  - Revisa cláusulas críticas de proveedores
-  forense            - Inicia análisis forense digital básico
-  limpiar            - Limpia la pantalla de la terminal`,
-    estado: () => !state.running ? '⚠ Auditoría no iniciada.' : `ESTADO DE LA AUDITORÍA
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Organismo: ${state.org.name}
-Categoría: ${state.category.toUpperCase()} | Dificultad: ${state.difficulty}
-Fase actual: ${['PRE-AUDITORÍA','PLANIFICACIÓN','EJECUCIÓN','INFORME','SEGUIMIENTO'][state.phase]}
-Hallazgos: ${state.findings.length} | Evidencias: ${state.evidences.length}
-Puntuación: ${state.score} | Tiempo: ${document.getElementById('s-time').textContent}`,
-    actores: () => state.currentActors.length ? state.currentActors.map(a => `• ${a.name} (${a.role}) - Estrés: ${a.stress.toUpperCase()}`).join('\n') : 'No hay actores en escena.',
-    hallazgos: () => state.findings.length ? state.findings.map(f => `[${f.severity.toUpperCase()}] ${f.code}: ${f.title}`).join('\n') : 'No hay hallazgos detectados aún.',
-    controles: (args) => {
-        const fam = (args[0] || '').toUpperCase();
-        const filtered = fam ? CONTROLS.filter(c => c.family === fam) : CONTROLS;
-        return filtered.map(c => `${c.code.padEnd(10)} [${c.level.toUpperCase().padEnd(5)}] ${c.name} (ISO: ${c.iso || '-'})`).join('\n');
-    },
-    evidencia: (args) => {
-        const code = args[0];
-        if (!code) return 'Uso: evidencia <código_hallazgo> (ej: evidencia NC-M-001)';
-        const f = state.findings.find(x => x.code === code);
-        if (!f) return `Hallazgo ${code} no encontrado.`;
-        if (!f.evidence) return 'Sin evidencia asociada a este hallazgo.';
-        return `EVIDENCIA: ${f.evidence.file}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${f.evidence.content}\n\nSHA-256: ${f.evidence.hash}`;
-    },
-    riesgo: () => {
-        if (!state.findings.length) return 'No hay hallazgos para calcular riesgos.';
-        let out = 'MATRIZ DE RIESGOS (MAGERIT v3)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-        state.findings.forEach(f => {
-            if (f.risk) {
-                const level = f.risk.p * f.risk.i;
-                const cat = level >= 15 ? 'EXTREMO' : level >= 9 ? 'ALTO' : level >= 4 ? 'MEDIO' : 'BAJO';
-                out += `${f.code.padEnd(12)} P:${f.risk.p} × I:${f.risk.i} = ${level.toString().padEnd(3)} [${cat}]\n`;
-            }
-        });
-        return out;
-    },
-    metricas: () => Object.keys(state.metrics).map(f => `${f.padEnd(3)}: ${state.metrics[f].toString().padStart(3)}% ${'█'.repeat(Math.floor(state.metrics[f]/5))}${'░'.repeat(20-Math.floor(state.metrics[f]/5))}`).join('\n'),
-    escanear: (args) => {
-        if (!state.running) return '⚠ Inicia la auditoría primero.';
-        const vulns = Math.floor(Math.random() * 6) + 2;
-        return `[*] Iniciando escaneo de vulnerabilidades con motor Nessus...
-[*] Objetivo: ${args[0] || 'red_interna'}
-[+] Escaneo completado en 47:23 minutos
-[!] Vulnerabilidades encontradas: ${vulns}
-    • Críticas (CVSS 9.0-10.0): ${Math.floor(Math.random() * 2)}
-    • Altas (CVSS 7.0-8.9): ${Math.floor(Math.random() * 3)}
-[!] Se recomienda revisar hallazgos críticos inmediatamente.
-[+] Informe generado: escaneo_${Date.now()}.pdf`,
-    nmap: (args) => `Iniciando Nmap 7.94 ( https://nmap.org )
-Explorando ${args[0] || '10.20.30.0/24'}
-Descubrimiento de hosts: 5 hosts activos
-PUERTO     ESTADO SERVICIO       VERSIÓN
-22/tcp     abierto ssh           OpenSSH 8.9
-80/tcp     abierto http          Apache 2.4.57
-443/tcp    abierto https         nginx 1.25.3
-3389/tcp   abierto ms-wbt-server Microsoft Terminal Services
-[!] 1 servicio no estándar detectado en puerto 8080.`,
-    leer_psi: () => `ANÁLISIS DE DOCUMENTO: PSI
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✓ Documento existe y está firmado por el Órgano Superior.
-⚠ ADVERTENCIA: La fecha de última revisión es de hace 18 meses (supera el ciclo anual recomendado por OR.pol.1).
-⚠ ADVERTENCIA: No se mencionan explícitamente los requisitos de la directiva NIS2 en la sección de gobernanza.
-Recomendación: Solicitar actualización inmediata.`,
-    analizar_contrato: () => `ANÁLISIS DE CONTRATO DE PROVEEDOR
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠ CLÁUSULA CRÍTICA DETECTADA: Renuncia al derecho de auditoría por parte del cliente.
-⚠ CLÁUSULA CRÍTICA DETECTADA: Permite la replicación de datos fuera del Espacio Económico Europeo (EEE).
-Cumplimiento OP.adq.1: NO CONFORME.
-Cumplimiento RGPD (Transferencias internacionales): EN RIESGO.`,
-    forense: () => `ANÁLISIS FORENSE DIGITAL (BÁSICO)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[*] Adquisición de evidencia en progreso...
-[+] Imagen de disco adquirida. Hash SHA-256 verificado.
-[*] Análisis de registros del sistema...
-[!] Intentos de acceso fallidos: ${Math.floor(Math.random()*500)+100}
-[!] Conexiones sospechosas detectadas: ${Math.floor(Math.random()*5)+1}
-[+] Se recomienda profundizar con herramientas de memoria (Volatility).`,
-    limpiar: () => { document.getElementById('term-out').innerHTML = ''; return ''; }
-};
-
 function execCmd() {
     const input = document.getElementById('term-in');
     const cmd = input.value.trim();
@@ -1261,15 +1291,16 @@ function execCmd() {
         const result = COMMANDS[command](args);
         if (result) termLog(result);
     } else {
-        termLog(`Comando no reconocido: '${command}'. Escribe 'ayuda' para ver la lista de comandos disponibles.`, 'err');
+        termLog(`Comando no reconocido: '${command}'. Escribe 'ayuda' para ver la lista.`, 'err');
     }
 }
 
 // ============================================================
-// CONSTRUCTORES DE PESTAÑAS
+// 7. CONSTRUCTORES DE PESTAÑAS
 // ============================================================
 function buildInventory() {
     const cont = document.getElementById('inv-cont');
+    if(!cont) return;
     cont.innerHTML = '';
     ASSETS.forEach(asset => {
         const div = document.createElement('div');
@@ -1285,6 +1316,7 @@ function buildInventory() {
 
 function buildDocs() {
     const cont = document.getElementById('doc-cont');
+    if(!cont) return;
     cont.innerHTML = '';
     DOCS.forEach(doc => {
         const div = document.createElement('div');
@@ -1302,6 +1334,7 @@ function buildDocs() {
 
 function buildPAC() {
     const cont = document.getElementById('pac-cont');
+    if(!cont) return;
     cont.innerHTML = '';
     if (!state.findings.length) {
         cont.innerHTML = '<div style="padding:20px;text-align:center;color:var(--dim);">No hay hallazgos para generar plan de acción correctiva.</div>';
@@ -1325,26 +1358,38 @@ function buildPAC() {
 
 function buildNetwork() {
     const cont = document.getElementById('net-cont');
-    cont.innerHTML = '<div style="text-align:center;width:100%;"><pre style="color:var(--green);font-size:0.7rem;line-height:1.2;">\n' +
-        '      [ INTERNET ]\n' +
-        '          │\n' +
-        '     [ FIREWALL ] ─── (WAF)\n' +
-        '      ╱         ╲\n' +
-        '  [ DMZ ]     [ RED INTERNA ]\n' +
-        '    │            ├─ [ APP SERVER ] ' + (state.findings.find(f=>f.code==='NC-M-001') ? '<span style="color:var(--red)">⚠ SIN CIFRAR</span>' : '') + '\n' +
-        '    │            ├─ [ BBDD CLIENTES ]\n' +
-        '    │            └─ [ LEGACY SERVER ] ' + (state.findings.find(f=>f.code==='NC-M-002') ? '<span style="color:var(--red)">⚠ SIN PARCHES</span>' : '') + '\n' +
-        '    │\n' +
-        ' [ PROVEEDOR CLOUD ] ─── (VPN IPSec)\n' +
-        '</pre></div>';
+    if(!cont) return;
+    const hasNC1 = state.findings.find(f => f.code === 'NC-M-001');
+    const hasNC2 = state.findings.find(f => f.code === 'NC-M-002');
+    
+    cont.innerHTML = `<div style="text-align:center;width:100%;"><pre style="color:var(--green);font-size:0.75rem;line-height:1.4;">
+      [ INTERNET ]
+          │
+     [ FIREWALL ] ─── (WAF)
+      ╱         ╲
+  [ DMZ ]     [ RED INTERNA ]
+    │            ├─ [ APP SERVER ] ${hasNC1 ? '<span style="color:var(--red)">⚠ SIN CIFRAR</span>' : '<span style="color:var(--green)">✓ SEGURO</span>'}
+    │            ├─ [ BBDD CLIENTES ]
+    │            └─ [ LEGACY SERVER ] ${hasNC2 ? '<span style="color:var(--red)">⚠ SIN PARCHES</span>' : '<span style="color:var(--green)">✓ SEGURO</span>'}
+    │
+ [ PROVEEDOR CLOUD ] ─── (VPN IPSec)
+</pre></div>`;
 }
 
 function switchTab(tabName, event) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    if (event) event.target.classList.add('active');
-    else document.querySelector(`.tab[onclick*="${tabName}"]`).classList.add('active');
-    document.getElementById(`tab-${tabName}`).classList.add('active');
+    
+    if (event && event.target) {
+        event.target.classList.add('active');
+    } else {
+        const tabEl = document.querySelector(`.tab[onclick*="${tabName}"]`);
+        if(tabEl) tabEl.classList.add('active');
+    }
+    
+    const pane = document.getElementById(`tab-${tabName}`);
+    if(pane) pane.classList.add('active');
+    
     if (tabName === 'risk') buildRiskMatrix();
     if (tabName === 'network') buildNetwork();
     if (tabName === 'inventory') buildInventory();
@@ -1355,7 +1400,7 @@ function switchTab(tabName, event) {
 function showHelp() { document.getElementById('help-ov').classList.add('active'); }
 
 // ============================================================
-// MOTOR DE ESCENARIOS Y SECUENCIA
+// 8. MOTOR DE ESCENARIOS Y SECUENCIA
 // ============================================================
 function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function pickN(arr, n) { 
@@ -1400,7 +1445,12 @@ function generateScenario() {
 }
 
 let auditTimers = [];
-function clearAllTimers() { auditTimers.forEach(t => clearTimeout(t)); auditTimers = []; if (state.timerInterval) clearInterval(state.timerInterval); if (state.pressureTimer) clearInterval(state.pressureTimer); }
+function clearAllTimers() { 
+    auditTimers.forEach(t => clearTimeout(t)); 
+    auditTimers = []; 
+    if (state.timerInterval) clearInterval(state.timerInterval); 
+    if (state.pressureTimer) clearInterval(state.pressureTimer); 
+}
 function schedule(fn, delay) { const t = setTimeout(fn, delay); auditTimers.push(t); return t; }
 function startTimer() {
     state.startTime = Date.now();
@@ -1423,7 +1473,10 @@ function startAudit() {
     document.getElementById('chat-msgs').innerHTML = '';
     document.getElementById('ev-box').style.display = 'none';
     document.getElementById('dec-box').style.display = 'none';
-    ['s-find', 's-ev', 's-inc', 'f-count', 'h-score'].forEach(id => document.getElementById(id).textContent = '0');
+    ['s-find', 's-ev', 's-inc', 'f-count', 'h-score'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.textContent = '0';
+    });
     
     generateScenario();
     document.getElementById('b-start').disabled = true;
@@ -1589,8 +1642,9 @@ function escalate() {
     addTimeline(`ESCALADO: ${f.code}`, 'Al Órgano Superior', 'warning');
     schedule(() => {
         if (state.currentActors.find(a => a.id === 'legal' || a.id === 'cio')) {
-            log('legal', ACTORS.legal?.name || ACTORS.cio.name, `Recibido. Convocamos comité de crisis extraordinario. Se presentará plan de remediación en 48h.`);
-            highlightActor('legal');
+            const actor = state.currentActors.find(a => a.id === 'legal') || state.currentActors.find(a => a.id === 'cio');
+            log(actor.class, actor.name, `Recibido. Convocamos comité de crisis extraordinario. Se presentará plan de remediación en 48h.`);
+            highlightActor(actor.id);
         } else {
             log('ciso', ACTORS.ciso.name, `Entendido. Prepararé un informe ejecutivo para la dirección antes de 48h.`);
         }
@@ -1664,7 +1718,7 @@ function exportReport() {
 }
 
 // ============================================================
-// ATAJOS DE TECLADO
+// 9. ATAJOS DE TECLADO
 // ============================================================
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F1') { e.preventDefault(); showHelp(); }
@@ -1678,18 +1732,10 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Inicialización
-drawRadar();
-buildChecklist();
-buildRiskMatrix();
-buildInventory();
-buildDocs();
-termLog('╔════════════════════════════════════════════════╗', 'info');
-termLog('║  PLATAFORMA DE AUDITORÍA ENS v5.0             ║', 'info');
-termLog('║  Sistema inicializado. Esperando auditoría.   ║', 'info');
-termLog('╚════════════════════════════════════════════════╝', 'info');
-termLog('Escribe "ayuda" o pulsa F1 para la guía de aprendizaje.', 'info');
-showToast('Sistema inicializado. Pulsa F1 para la guía de aprendizaje paso a paso.');
+// Cerrar modal al hacer clic fuera
+document.getElementById('modal-ov').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-ov') closeModal();
+});
 </script>
 </body>
 </html>
