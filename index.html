@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENS AUDIT SIMULATOR // BLACK OPS</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --primary-color: #00ff41;
+            --secondary-color: #008F11;
+            --alert-color: #ff3333;
+            --warn-color: #ffcc00;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        #matrix-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+        #interface {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.85);
+        }
+        header {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 { font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px var(--primary-color); }
+        .status-bar { font-size: 0.9rem; color: var(--secondary-color); }
+        #main-container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            overflow: hidden;
+        }
+        #log-panel {
+            flex: 2;
+            border: 1px solid var(--secondary-color);
+            padding: 15px;
+            overflow-y: auto;
+            background: rgba(0, 20, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .log-entry {
+            padding: 8px;
+            border-left: 3px solid var(--secondary-color);
+            background: rgba(0, 255, 65, 0.05);
+            font-size: 0.95rem;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease-in;
+        }
+        .log-entry.auditor { border-left-color: var(--primary-color); color: #ccffcc; }
+        .log-entry.ciso { border-left-color: var(--warn-color); color: #ffeebb; }
+        .log-entry.sysadmin { border-left-color: #00ccff; color: #bbffee; }
+        .log-entry.dpo { border-left-color: #ff99ff; color: #ffccff; }
+        .log-entry.system { border-left-color: #ffffff; color: #ffffff; font-style: italic; }
+        .log-entry.gap { border-left-color: var(--alert-color); color: #ff9999; background: rgba(255, 51, 51, 0.1); }
+        
+        #control-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .actor-status {
+            border: 1px solid var(--secondary-color);
+            padding: 10px;
+            font-size: 0.85rem;
+        }
+        .actor-status h3 { margin-bottom: 8px; color: var(--primary-color); border-bottom: 1px solid var(--secondary-color); padding-bottom: 5px; }
+        .actor { margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .stress-level { color: var(--warn-color); }
+        .stress-level.high { color: var(--alert-color); font-weight: bold; }
+        
+        #actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: auto;
+        }
+        button {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 12px;
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        button:hover {
+            background: var(--primary-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 15px var(--primary-color);
+        }
+        button:disabled {
+            border-color: #333;
+            color: #333;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #001100; }
+        ::-webkit-scrollbar-thumb { background: var(--secondary-color); }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    <div id="interface">
+        <header>
+            <h1>ENS AUDIT SIMULATOR // RD 311/2022</h1>
+            <div class="status-bar">CATEGORIZACIÓN: ALTO | NIVEL DE AMENAZA: CRÍTICO</div>
+        </header>
+        <div id="main-container">
+            <div id="log-panel"></div>
+            <div id="control-panel">
+                <div class="actor-status">
+                    <h3>ESTADO DE ACTORES</h3>
+                    <div class="actor"><span>AUDITOR (TÚ)</span><span>CONTROL TOTAL</span></div>
+                    <div class="actor"><span>CISO (Carlos)</span><span class="stress-level" id="stress-ciso">ESTRÉS: 10%</span></div>
+                    <div class="actor"><span>SYSADMIN (David)</span><span class="stress-level" id="stress-sysadmin">ESTRÉS: 15%</span></div>
+                    <div class="actor"><span>DPO (Elena)</span><span class="stress-level" id="stress-dpo">ESTRÉS: 20%</span></div>
+                </div>
+                <div class="actor-status">
+                    <h3>MÉTRICAS DE AUDITORÍA</h3>
+                    <div class="actor"><span>GAPS DETECTADOS:</span><span id="gap-count">0</span></div>
+                    <div class="actor"><span>RIESGO RESIDUAL:</span><span id="risk-level" style="color: var(--warn-color)">MEDIO</span></div>
+                    <div class="actor"><span>FASE ACTUAL:</span><span id="current-phase">INICIO</span></div>
+                </div>
+                <div id="actions">
+                    <button id="btn-evidence" onclick="requestEvidence()">SOLICITAR EVIDENCIA (LOG.1 / ACC.3)</button>
+                    <button id="btn-interview" onclick="interviewActor()">INTERROGAR ACTOR CLAVE</button>
+                    <button id="btn-analyze" onclick="analyzeRisk()">ANALIZAR GAP Y RIESGO</button>
+                    <button id="btn-report" onclick="generateReport()" disabled>GENERAR INFORME FINAL Y REMEDIACIÓN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Rain Effect
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 35);
+
+        // Audit Simulation Logic
+        let state = {
+            phase: 0,
+            gaps: 0,
+            stress: { ciso: 10, sysadmin: 15, dpo: 20 },
+            phases: ['INICIO', 'INVENTARIO Y ALCANCE', 'CONTROL DE ACCESOS', 'GESTIÓN DE INCIDENTES', 'INFORME FINAL']
+        };
+
+        const dialogues = {
+            evidence: [
+                { actor: 'system', text: 'Solicitando registros de auditoría del sistema de producción (LOG.1)...' },
+                { actor: 'sysadmin', text: 'Eh, los logs se rotan cada 24 horas por limitación de almacenamiento. No tenemos los 6 meses que pide el ENS Medio/Alto.' },
+                { actor: 'auditor', text: 'Inaceptable. La medida LOG.1 exige conservación mínima para permitir la investigación de incidentes. Esto es un gap directo.' },
+                { actor: 'ciso', text: 'Podemos justificarlo como una limitación presupuestaria temporal, tenemos un plan de mejora para el Q3...' },
+                { actor: 'auditor', text: 'El riesgo no espera al Q3. Un incidente hoy sería indetectable. Gap registrado.' }
+            ],
+            interview: [
+                { actor: 'auditor', text: 'CISO, explícame el proceso de aprobación de privilegios de administrador en el entorno de producción.' },
+                { actor: 'ciso', text: 'Se sigue un flujo de ticketing. El responsable de seguridad aprueba y el administrador ejecuta.' },
+                { actor: 'auditor', text: 'Sysadmin, ¿cuántas cuentas tienen privilegios elevados permanentes sin revisión trimestral?' },
+                { actor: 'sysadmin', text: 'Bueno... hay unas 15 cuentas de servicio y 4 de administradores antiguos que no se han dado de baja. El sistema legacy no soporta MFA.' },
+                { actor: 'dpo', text: 'Si esas cuentas acceden a datos personales sin MFA, estamos violando el principio de integridad y confidencialidad del RGPD y el ENS.' },
+                { actor: 'auditor', text: 'Falta de revisión de privilegios y ausencia de MFA en accesos remotos. Gap crítico ACC.3 registrado.' }
+            ],
+            analyze: [
+                { actor: 'system', text: 'Ejecutando análisis de impacto sobre los gaps detectados...' },
+                { actor: 'auditor', text: 'El gap de logging impide la trazabilidad. El gap de accesos permite movimiento lateral. La probabilidad de explotación es ALTA.' },
+                { actor: 'ciso', text: 'Pero tenemos un firewall perimetral y EDR en los endpoints.' },
+                { actor: 'auditor', text: 'La seguridad en capas no justifica el fallo en controles básicos. El riesgo residual se eleva a CRÍTICO. Se requiere plan de remediación inmediato.' }
+            ],
+            report: [
+                { actor: 'system', text: 'Generando Informe de Auditoría ENS (RD 311/2022)...' },
+                { actor: 'auditor', text: 'INFORME FINAL: La organización no cumple con los requisitos mínimos del nivel Alto de seguridad.' },
+                { actor: 'auditor', text: 'GAPS CRÍTICOS: 1) Ausencia de retención de logs (LOG.1). 2) Privilegios excesivos sin MFA (ACC.3). 3) Plan de Continuidad de Negocio no probado en el último año (COP.2).' },
+                { actor: 'auditor', text: 'REMEDIACIÓN: Implementación obligatoria de SIEM con retención de 6 meses, despliegue de MFA en 30 días, y ejercicio de simulacro de crisis en 60 días. Próxima auditoría de seguimiento en 90 días.' },
+                { actor: 'ciso', text: 'Entendido. Iniciaremos el plan de remediación de inmediato. Gracias por la... claridad.' }
+            ]
+        };
+
+        function addLog(actor, text, type = '') {
+            const logPanel = document.getElementById('log-panel');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${actor} ${type}`;
+            const timestamp = new Date().toLocaleTimeString('es-ES', { hour12: false });
+            entry.innerHTML = `<strong>[${timestamp}] ${actor.toUpperCase()}:</strong> ${text}`;
+            logPanel.appendChild(entry);
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        function updateStress() {
+            document.getElementById('stress-ciso').innerText = `ESTRÉS: ${state.stress.ciso}%`;
+            document.getElementById('stress-sysadmin').innerText = `ESTRÉS: ${state.stress.sysadmin}%`;
+            document.getElementById('stress-dpo').innerText = `ESTRÉS: ${state.stress.dpo}%`;
+            
+            if (state.stress.ciso > 50) document.getElementById('stress-ciso').classList.add('high');
+            if (state.stress.sysadmin > 60) document.getElementById('stress-sysadmin').classList.add('high');
+        }
+
+        function updateMetrics() {
+            document.getElementById('gap-count').innerText = state.gaps;
+            document.getElementById('current-phase').innerText = state.phases[state.phase];
+            if (state.gaps >= 2) {
+                document.getElementById('risk-level').innerText = 'CRÍTICO';
+                document.getElementById('risk-level').style.color = 'var(--alert-color)';
+            }
+        }
+
+        function requestEvidence() {
+            if (state.phase < 1) { state.phase = 1; updateMetrics(); }
+            dialogues.evidence.forEach((line, index) => {
+                setTimeout(() => {
+                    addLog(line.actor, line.text, line.actor === 'auditor' ? 'gap' : '');
+                    if (line.actor === 'sysadmin') state.stress.sysadmin += 25;
+                    if (line.actor === 'ciso') state.stress.ciso += 15;
+                    updateStress();
+                    if (index === dialogues.evidence.length - 1) {
+                        state.gaps++;
+                        updateMetrics();
+                    }
+                }, index * 1200);
+            });
+            document.getElementById('btn-evidence').disabled = true;
+        }
+
+        function interviewActor() {
+            if (state.phase < 2) { state.phase = 2; updateMetrics(); }
+            dialogues.interview.forEach((line, index) => {
+                setTimeout(() => {
+                    addLog(line.actor, line.text, line.actor === 'auditor' ? 'gap' : '');
+                    if (line.actor === 'sysadmin') state.stress.sysadmin += 20;
+                    if (line.actor === 'ciso') state.stress.ciso += 20;
+                    if (line.actor === 'dpo') state.stress.dpo += 10;
+                    updateStress();
+                    if (index === dialogues.interview.length - 1) {
+                        state.gaps++;
+                        updateMetrics();
+                        document.getElementById('btn-analyze').disabled = false;
+                    }
+                }, index * 1200);
+            });
+            document.getElementById('btn-interview').disabled = true;
+        }
+
+        function analyzeRisk() {
+            if (state.phase < 3) { state.phase = 3; updateMetrics(); }
+            dialogues.analyze.forEach((line, index) => {
+                setTimeout(() => {
+                    addLog(line.actor, line.text, line.actor === 'auditor' ? 'gap' : '');
+                    if (index === dialogues.analyze.length - 1) {
+                        document.getElementById('btn-report').disabled = false;
+                        state.phase = 4;
+                        updateMetrics();
+                    }
+                }, index * 1200);
+            });
+            document.getElementById('btn-analyze').disabled = true;
+        }
+
+        function generateReport() {
+            dialogues.report.forEach((line, index) => {
+                setTimeout(() => {
+                    addLog(line.actor, line.text, line.actor === 'auditor' ? 'gap' : 'system');
+                }, index * 1500);
+            });
+            document.getElementById('btn-report').disabled = true;
+            document.getElementById('btn-report').innerText = 'AUDITORÍA COMPLETADA';
+        }
+
+        // Initialization
+        window.onload = () => {
+            addLog('system', 'INICIALIZANDO ENTORNO DE AUDITORÍA ENS...');
+            setTimeout(() => addLog('auditor', 'Soy el auditor líder. Esta organización ha sido categorizada como nivel Alto. No aceptaré excusas. Empecemos por el inventario y los registros.', 'auditor'), 1000);
+            updateMetrics();
+        };
+    </script>
+</body>
+</html>
